@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вопрос 2 · Миграция DI и жизненные циклы в .NET</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css">
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/csharp.min.js"></script>
+<style>
+  :root{
+    --bg:#f7f8fb; --ink:#1c2230; --muted:#5a6478; --line:#e3e7f0;
+    --brand:#4f46e5; --tip:#0f9d58; --warn:#d97706; --gold:#b45309; --note:#2563eb;
+    --code-bg:#0d1117; --shadow:0 10px 30px rgba(20,28,60,.08);
+    --mono:"JetBrains Mono","Fira Code",ui-monospace,Menlo,Consolas,monospace;
+    --sans:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.7;-webkit-font-smoothing:antialiased}
+  .layout{display:grid;grid-template-columns:280px minmax(0,1fr);max-width:1280px;margin:0 auto}
+  aside{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:28px 20px 60px;border-right:1px solid var(--line);background:linear-gradient(180deg,#fff,#f4f6fc)}
+  aside .brandsmall{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--brand);font-weight:700}
+  aside h2{font-size:16px;margin:6px 0 18px;line-height:1.35}
+  aside nav a{display:block;color:var(--muted);text-decoration:none;font-size:14.5px;padding:7px 12px;border-radius:9px;transition:.15s}
+  aside nav a:hover{background:#eef1fa;color:var(--ink)}
+  main{padding:44px 54px 110px}
+  article{max-width:860px;margin:0 auto}
+  .hero{background:linear-gradient(135deg,#4f46e5,#0ea5e9);color:#fff;border-radius:14px;padding:36px 40px;box-shadow:var(--shadow);margin-bottom:36px}
+  .hero .kicker{font-size:12.5px;text-transform:uppercase;letter-spacing:.16em;opacity:.9;font-weight:700}
+  .hero h1{font-size:30px;line-height:1.2;margin:12px 0;font-weight:800}
+  .hero p{margin:0;font-size:17px;opacity:.96;max-width:60ch}
+  .hero .meta{margin-top:18px;font-size:13.5px;opacity:.9;border-top:1px solid rgba(255,255,255,.3);padding-top:12px}
+  .topnav{margin:0 0 18px;font-size:14.5px;color:var(--muted)}
+  .topnav a{text-decoration:none;font-weight:600}
+  .topnav span{margin:0 9px;color:#c3cad9}
+  h2{font-size:25px;margin:52px 0 14px;padding-bottom:10px;border-bottom:2px solid var(--line)}
+  h3{font-size:19px;margin:30px 0 8px}
+  p{margin:12px 0}
+  ul,ol{margin:12px 0;padding-left:24px}
+  li{margin:6px 0}
+  strong{color:#111726}
+  code{font-family:var(--mono);font-size:.9em;background:#eef1f8;color:#b4007a;padding:2px 6px;border-radius:6px;border:1px solid #e0e5f2}
+  pre{background:var(--code-bg);border-radius:12px;padding:18px 20px;overflow:auto;box-shadow:var(--shadow);border:1px solid #1b2434;margin:16px 0}
+  pre code{background:none;color:#e6edf3;border:none;padding:0;font-size:14px;line-height:1.6}
+  .codewrap{margin:16px 0}
+  .codewrap .cap{font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:600}
+  .box{border-radius:12px;padding:15px 20px;margin:18px 0;border-left:5px solid;background:#fff;box-shadow:var(--shadow)}
+  .box .t{font-weight:800;font-size:13.5px;letter-spacing:.03em;text-transform:uppercase;margin-bottom:5px;display:block}
+  .box p:first-of-type{margin-top:0}.box p:last-child{margin-bottom:0}
+  .tip{border-color:var(--tip)} .tip .t{color:var(--tip)}
+  .warn{border-color:var(--warn)} .warn .t{color:var(--warn)}
+  .gold{border-color:var(--gold);background:linear-gradient(180deg,#fffdf5,#fff)} .gold .t{color:var(--gold)}
+  .note{border-color:var(--note)} .note .t{color:var(--note)}
+  .danger{border-color:#dc2626} .danger .t{color:#dc2626}
+  table{border-collapse:collapse;width:100%;margin:18px 0;font-size:15px;background:#fff;box-shadow:var(--shadow);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#eef1fa;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:#38405a}
+  tr:last-child td{border-bottom:none}
+  .qa{border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);padding:4px 22px;margin:18px 0}
+  .qa .q{font-weight:800;color:var(--brand)}
+  footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+  @media(max-width:960px){
+    .layout{grid-template-columns:1fr}
+    aside{position:static;height:auto;border-right:none;border-bottom:1px solid var(--line)}
+    main{padding:24px 16px 70px}
+    .hero{padding:26px 22px}.hero h1{font-size:24px}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <div class="brandsmall">.NET Backend · Middle+</div>
+    <h2>Вопрос 2. Миграция DI и жизненные циклы</h2>
+    <nav>
+      <a href="index.html">← Все вопросы</a>
+      <a href="#intro2">0. Столкновение миров</a>
+      <a href="#pains">1. Главные боли миграции DI</a>
+      <a href="#lifetimes">2. Жизненные циклы</a>
+      <a href="#captive">3. Captive Dependency</a>
+      <a href="#detect">4. Как отлавливать</a>
+      <a href="#practices">5. Приёмы и код</a>
+      <a href="#answer2">6. Готовый ответ</a>
+      <a href="#cheat2">7. Шпаргалка</a>
+    </nav>
+  </aside>
+  <main>
+  <article>
+    <div class="topnav">
+      <a href="index.html">← Все вопросы</a><span>·</span><a href="q1-high-load.html">Вопрос 1: высокая нагрузка</a><span>·</span><strong>Вопрос 2: DI и жизненные циклы</strong>
+    </div>
+    <div class="hero">
+      <div class="kicker">Подготовка к собеседованию · Middle+</div>
+      <h1>Миграция DI и жизненных циклов: .NET Framework → .NET Core</h1>
+      <p>Какие боли возникают при переносе внедрения зависимостей и жизненного цикла объектов, что такое
+         Captive Dependency и как их ловить. На уровне продвинутого middle, с примерами на C#.</p>
+      <div class="meta">Алексей Грознов · разбор вопроса по резюме (перевод legacy MVC/WPF на .NET Core)</div>
+    </div>
+
+    <section id="intro2">
+      <h2>0. Столкновение двух миров</h2>
+      <p><strong>Суть ответа одной фразой:</strong> в .NET Framework внедрение зависимостей (DI) было
+        <em>опциональным и сторонним</em> (Unity, Autofac, Ninject через <code>IDependencyResolver</code>),
+        а в .NET Core DI стал <strong>встроенным и обязательным</strong> — через него проходит всё приложение
+        (Generic Host). Отсюда и большинство болей при миграции: код, который раньше жил «сам по себе»
+        (<code>new</code>, статика, service locator), приходится заводить в общий контейнер и следить за
+        жизненными циклами.</p>
+
+      <table>
+        <thead><tr><th>Аспект</th><th>.NET Framework (MVC/WPF)</th><th>.NET Core</th></tr></thead>
+        <tbody>
+          <tr><td>DI</td><td>не встроен, сторонний, часто опционален</td><td>встроенный <code>Microsoft.Extensions.DependencyInjection</code>, Generic Host</td></tr>
+          <tr><td>Получение зависимости</td><td>ручной <code>new</code>, service locator, реже конструктор</td><td>прежде всего <strong>constructor injection</strong></td></tr>
+          <tr><td><code>HttpContext</code></td><td><code>HttpContext.Current</code> (статик)</td><td><code>IHttpContextAccessor</code></td></tr>
+          <tr><td>Конфигурация</td><td>Web.config / App.config, <code>ConfigurationManager</code></td><td><code>IConfiguration</code> + <code>IOptions*</code></td></tr>
+          <tr><td>Lifetime «на запрос»</td><td><code>InstancePerRequest</code> (Autofac)</td><td><strong>Scoped</strong></td></tr>
+          <tr><td>Точка старта</td><td>Global.asax / OWIN Startup</td><td><code>Program</code> + Generic Host</td></tr>
+          <tr><td>Валидация графа DI</td><td>обычно нет</td><td><code>ValidateScopes</code> / <code>ValidateOnBuild</code></td></tr>
+        </tbody>
+      </table>
+
+      <div class="box note">
+        <span class="t">Главная смена парадигмы</span>
+        <p>Раньше объект мог «достать» себе зависимость сам (создать, взять из статики или из локатора).
+          В .NET Core зависимость <strong>должна быть зарегистрирована</strong>, иначе — ошибка на старте.
+          Отсутствие регистрации = падение при запуске, а не «в рантайме где-то потом». Это одновременно и
+          строже, и безопаснее.</p>
+      </div>
+    </section>
+
+    <section id="pains">
+      <h2>1. Главные боли миграции DI</h2>
+      <p>То, с чем реально сталкиваешься при переносе кода:</p>
+      <ol>
+        <li><strong>Разбросанный <code>new</code> и статика.</strong> Зависимости создавались вручную или
+          лежали в статических классах. Теперь всё нужно завести в DI-контейнер.</li>
+        <li><strong>Service Locator.</strong> Код вызывал <code>DependencyResolver.Current.GetService&lt;T&gt;()</code>
+          или тянул <code>IServiceProvider</code> везде. Это антипаттерн — переходим на constructor injection.</li>
+        <li><strong><code>HttpContext.Current</code> больше нет.</strong> Классическая боль миграции —
+          заменяем на <code>IHttpContextAccessor</code> (только для инфраструктурного кода).</li>
+        <li><strong>Возможности сторонних контейнеров.</strong> Autofac/Unity умели property injection,
+          child-контейнеры, перехватчики (interceptors). Встроенный DI это не умеет — либо упрощаем,
+          либо подключаем Autofac рядом (<code>Autofac.Extensions.DependencyInjection</code>).</li>
+        <li><strong>Конфигурация.</strong> <code>ConfigurationManager</code> / <code>Web.config</code> →
+          <code>IConfiguration</code> и <code>IOptions*</code> (у них тоже свои lifetimes).</li>
+        <li><strong>WPF отдельная история.</strong> У WPF не было встроенного хоста — приходилось поднимать
+          Generic Host внутри WPF-приложения и заводить в DI view-модели и сервисы.</li>
+        <li><strong>Жизненные циклы.</strong> Нужно осознанно разложить всё по Transient / Scoped / Singleton
+          и не сломать граф — об этом ниже.</li>
+      </ol>
+
+      <div class="box warn">
+        <span class="t">Частый подводный камень</span>
+        <p>При переносе легко «потерять» Scope: код, который раньше получал объект статически, после миграции
+          становится Singleton — и вместе с ним навсегда тянет за собой что-то «запросное» (тот же
+          <code>DbContext</code>). Это и есть Captive Dependency (раздел 3).</p>
+      </div>
+    </section>
+
+    <section id="lifetimes">
+      <h2>2. Жизненные циклы: Transient / Scoped / Singleton</h2>
+      <table>
+        <thead><tr><th>Lifetime</th><th>Что это</th><th>Когда брать</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Transient</strong></td><td>Новый экземпляр на каждое обращение</td><td>Лёгкие сервисы без состояния (мапперы, отправители)</td></tr>
+          <tr><td><strong>Scoped</strong></td><td>Один экземпляр на HTTP-запрос (на «scope»)</td><td><code>DbContext</code>, репозитории, request-контекст</td></tr>
+          <tr><td><strong>Singleton</strong></td><td>Один на всё приложение</td><td>Конфиг, кэши, stateless-инфраструктура (должен быть потокобезопасен!)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="box gold">
+        <span class="t">★ Золотое правило</span>
+        <p>Долгоживущий сервис <strong>не должен зависеть</strong> от короткоживущего.
+          <strong>Singleton не зависит от Scoped.</strong> Если нарушить — Scoped-объект «прилипает» к Singleton
+          и живёт вечно. Это и есть Captive Dependency.</p>
+      </div>
+
+      <div class="codewrap">
+        <p class="cap">Lifetimes в ASP.NET Core — как выглядит на практике</p>
+        <pre><code class="language-csharp">builder.Services.AddTransient&lt;IMapper, Mapper&gt;();        // новый каждый раз
+builder.Services.AddScoped&lt;IOrderRepository, OrderRepository&gt;(); // раз на запрос
+builder.Services.AddSingleton&lt;IClock, SystemClock&gt;();     // один на приложение
+
+// DbContext по умолчанию регистрируется как Scoped — это важно!
+builder.Services.AddDbContext&lt;AppDbContext&gt;(o =&gt; o.UseNpgsql(cs));</code></pre>
+      </div>
+
+      <div class="box note">
+        <span class="t">Где «живёт» Scoped вне HTTP</span>
+        <p>В фоновых сервисах и консольных приложениях HTTP-запроса нет, поэтому scope нужно создавать
+          <strong>самому</strong> (<code>IServiceScopeFactory.CreateScope()</code>). Если этого не делать —
+          получишь либо ошибку, либо «вечный» объект.</p>
+      </div>
+    </section>
+
+    <section id="captive">
+      <h2>3. Captive Dependency — суть и как проявляется</h2>
+      <p><strong>Captive Dependency</strong> — это когда сервис с <em>большим</em> временем жизни удерживает
+        ссылку на сервис с <em>меньшим</em> временем жизни. Самый частый случай: <strong>Singleton держит
+        Scoped</strong> (обычно <code>DbContext</code>).</p>
+
+      <div class="codewrap">
+        <p class="cap">Классический (и опасный) пример</p>
+        <pre><code class="language-csharp">// ✘ ReportService — Singleton, но зависит от Scoped DbContext
+builder.Services.AddSingleton&lt;ReportService&gt;();   // время жизни: всё приложение
+builder.Services.AddDbContext&lt;AppDbContext&gt;(o =&gt; o.UseNpgsql(cs)); // Scoped!
+
+public sealed class ReportService(AppDbContext db) // Scoped попал в Singleton → captive
+{
+    public Task&lt;Report&gt; BuildAsync() =&gt; db.Reports.FirstAsync();
+}</code></pre>
+      </div>
+
+      <p><strong>Чем это плохо на практике:</strong></p>
+      <ul>
+        <li><code>DbContext</code> создаётся один раз и живёт всё время приложения → растёт память
+          (накопленные отслеживаемые сущности), устаревают данные.</li>
+        <li>Возникают ошибки конкурентности: «<em>A second operation started on this context before a
+          previous operation completed</em>» — один и тот же контекст дергают параллельно.</li>
+        <li>Ошибки «<em>Cannot access a disposed object</em>» и трудноуловимые баги.</li>
+      </ul>
+
+      <div class="box danger">
+        <span class="t">Запомнить</span>
+        <p>Captive Dependency #1: <strong>Singleton → DbContext (Scoped)</strong>. Это вопрос, который
+          интервьюер почти наверняка ждёт услышать как «самый частый случай».</p>
+      </div>
+
+      <h4>Как правильно, когда Singleton всё же нужен доступ к БД</h4>
+      <p>Не инжектить <code>DbContext</code> и не тащить <code>IServiceProvider</code>, а создавать scope
+        <strong>на операцию</strong> через <code>IServiceScopeFactory</code>:</p>
+      <div class="codewrap">
+        <p class="cap">Правильно: scope на каждую операцию</p>
+        <pre><code class="language-csharp">public sealed class ReportService(IServiceScopeFactory scopeFactory)
+{
+    public async Task&lt;Report&gt; BuildAsync(CancellationToken ct)
+    {
+        // Создаём свой scope и берём из него Scoped-зависимости.
+        using var scope = scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService&lt;AppDbContext&gt;();
+
+        return await db.Reports.AsNoTracking().FirstAsync(ct);
+    }
+}</code></pre>
+      </div>
+    </section>
+
+    <section id="detect">
+      <h2>4. Как отлавливать Captive Dependency</h2>
+      <p>Это ключевая часть вопроса — интервьюер хочет услышать конкретные способы, а не «ну, стараюсь быть
+        внимательным».</p>
+
+      <h3>Способ 1: встроенная валидация графа на старте (главный)</h3>
+      <p>В .NET Core есть две опции провайдера, которые проверяют граф зависимостей <strong>при старте</strong> и
+        падают сразу, если Singleton тянет Scoped:</p>
+      <div class="codewrap">
+        <p class="cap">Включаем проверку scope и сборки графа</p>
+        <pre><code class="language-csharp">builder.Host.UseDefaultServiceProvider(options =&gt;
+{
+    options.ValidateScopes = true;    // ловит: Singleton -> Scoped
+    options.ValidateOnBuild = true;   // ловит: незарегистрированные зависимости, ошибки графа
+});</code></pre>
+      </div>
+      <div class="box tip">
+        <span class="t">Что это даёт</span>
+        <p><code>ValidateScopes</code> в момент создания Singleton-а увидит попытку получить Scoped и бросит:
+          «<em>Cannot consume scoped service 'AppDbContext' from singleton 'ReportService'</em>».
+          <code>ValidateOnBuild</code> проверяет <strong>весь</strong> граф при старте приложения — это ловит
+          и captive-зависимости, и забытые регистрации. По умолчанию <code>ValidateScopes</code> включён
+          только в Development — поэтому его включают во всех средах.</p>
+      </div>
+
+      <h3>Способ 2: тест, который резолвит все сервисы</h3>
+      <p>Дополнительная страховка в CI: построить провайдер из реальных регистраций и попытаться получить
+        каждый сервис внутри scope. Падение теста = проблема найдена до продакшена.</p>
+      <div class="codewrap">
+        <p class="cap">Тест-«сторож» на граф DI</p>
+        <pre><code class="language-csharp">[Fact]
+public void Di_graph_is_valid()
+{
+    var services = new ServiceCollection();
+    ConfigureServices(services); // те же регистрации, что в приложении
+
+    var provider = services.BuildServiceProvider(new ServiceProviderOptions
+    {
+        ValidateScopes = true,
+        ValidateOnBuild = true
+    });
+
+    using var scope = provider.CreateScope();
+    foreach (var descriptor in services)
+    {
+        if (descriptor.ServiceType.IsGenericTypeDefinition) continue;
+        // Не должно бросать исключение для реально зарегистрированных зависимостей.
+        scope.ServiceProvider.GetService(descriptor.ServiceType);
+    }
+}</code></pre>
+      </div>
+
+      <h3>Способ 3: код-ревью, правила и анализ</h3>
+      <ul>
+        <li>Правило для ревью: <strong>Singleton — только stateless/инфраструктура</strong>; всё, что ходит в
+          <code>DbContext</code> — Scoped.</li>
+        <li>Красные флаги в коде: инжект <code>IServiceProvider</code> или <code>DbContext</code> в Singleton;
+          хранение <code>HttpContext</code> в поле.</li>
+        <li>Roslyn-анализаторы и проверки на CI (в т.ч. правило <code>ASP0000</code> — не вызывать
+          <code>BuildServiceProvider()</code> в <code>ConfigureServices</code>).</li>
+      </ul>
+
+      <h3>Симптомы в рантайме (когда не поймали заранее)</h3>
+      <ul>
+        <li>Постоянно растущая память (captured-объекты не собираются GC).</li>
+        <li>Ошибки конкурентности у <code>DbContext</code>.</li>
+        <li>«Устаревшие» данные, которые должны были обновиться на следующий запрос.</li>
+      </ul>
+    </section>
+
+    <section id="practices">
+      <h2>5. Приёмы и код, которые стоит назвать</h2>
+
+      <h4>Фоновые сервисы (BackgroundService — это Singleton)</h4>
+      <div class="codewrap">
+        <p class="cap">Scope на каждую итерацию — обязательный паттерн</p>
+        <pre><code class="language-csharp">public sealed class CleanupWorker(IServiceScopeFactory scopeFactory) : BackgroundService
+{
+    protected override async Task ExecuteAsync(CancellationToken ct)
+    {
+        while (!ct.IsCancellationRequested)
+        {
+            using (var scope = scopeFactory.CreateScope())   // НОВЫЙ scope на итерацию
+            {
+                var db = scope.ServiceProvider.GetRequiredService&lt;AppDbContext&gt;();
+                await db.CleanupAsync(ct);
+            }
+            await Task.Delay(TimeSpan.FromMinutes(5), ct);
+        }
+    }
+}</code></pre>
+      </div>
+
+      <h4>Опции конфигурации и их lifetimes</h4>
+      <ul>
+        <li><code>IOptions&lt;T&gt;</code> — singleton, значение на старте.</li>
+        <li><code>IOptionsSnapshot&lt;T&gt;</code> — <strong>scoped</strong>, перечитывается на запрос.</li>
+        <li><code>IOptionsMonitor&lt;T&gt;</code> — singleton с уведомлениями об изменениях.</li>
+      </ul>
+      <p>Это хороший пример того, что lifetime нужно понимать осознанно, а не «на глаз».</p>
+
+      <h4>HTTP-клиенты</h4>
+      <p>Не хранить <code>new HttpClient()</code> в Singleton-поле (проблемы с сокетами и DNS), а брать через
+        <code>IHttpClientFactory</code> — типобезопасные клиенты уже управляются фабрикой.</p>
+
+      <h4>WPF-специфика (из опыта миграции)</h4>
+      <ul>
+        <li>Поднимали <strong>Generic Host</strong> внутри WPF: <code>Host.CreateDefaultBuilder()</code> +
+          <code>StartAsync</code> на старте приложения.</li>
+        <li>View-модели и окна получали через DI; аккуратно с lifetimes: окно/VM обычно не Singleton,
+          иначе накапливаются подписки на события (утечки).</li>
+        <li>Тяжёлые сервисы (логгеры, кэши, клиенты) — Singleton; «на экран» — Transient/Scoped.</li>
+      </ul>
+
+      <div class="box gold">
+        <span class="t">★ Итоговая мысль раздела</span>
+        <p>При миграции DI главное — не «перенести регистрации», а <strong>осознанно разложить зависимости по
+          lifetimes</strong> и включить валидацию, чтобы граф ломался на старте, а не в продакшене.</p>
+      </div>
+    </section>
+
+    <section id="answer2">
+      <h2>6. Готовый ответ (2–3 минуты)</h2>
+      <p>Четыре короткие мысли — их легко запомнить и произнести.</p>
+
+      <div class="qa">
+        <p><span class="q">1. Главное различие.</span> «В .NET Framework DI был сторонним и опциональным
+          (Unity, Autofac через <code>IDependencyResolver</code>), а в .NET Core DI встроенный и обязательный —
+          через Generic Host проходит всё приложение. Если зависимость не зарегистрирована, приложение
+          падает на старте, а не «где-то потом»».</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="q">2. Главные боли.</span> «Перенос неявных зависимостей: ручные <code>new</code>,
+          service locator, статика. Пришлось убрать <code>HttpContext.Current</code> →
+          <code>IHttpContextAccessor</code>, перевести конфигурацию с <code>Web.config</code> на
+          <code>IOptions</code>, а в WPF — поднять Generic Host и завести view-модели в DI».</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="q">3. Жизненные циклы.</span> «Transient — новый на каждое обращение; Scoped — один
+          на запрос (<code>DbContext</code>); Singleton — один на приложение. Золотое правило:
+          долгоживущий не должен зависеть от короткоживущего — Singleton не зависит от Scoped».</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="q">4. Captive Dependency.</span> «Самый частый случай — Singleton держит
+          <code>DbContext</code> (Scoped). Ловил это включением <code>ValidateScopes</code> и
+          <code>ValidateOnBuild</code> — граф падает на старте с понятной ошибкой, плюс отдельный тест,
+          который резолвит все сервисы в scope. Починка — не тащить <code>DbContext</code>, а создавать
+          scope через <code>IServiceScopeFactory</code> на каждую операцию; в фоновых сервисах — scope на
+          итерацию».</p>
+      </div>
+
+      <div class="box gold">
+        <span class="t">★ Козырь под твой опыт</span>
+        <p>«При переводе legacy MVC/WPF на .NET Core именно настройка DI и lifetimes заняла больше всего
+          времени: мы фактически заново выстраивали граф зависимостей и правило — что Singleton, а что Scoped,
+          чтобы не словить captive-зависимости на <code>DbContext</code>».</p>
+      </div>
+    </section>
+
+    <section id="cheat2">
+      <h2>7. Шпаргалка</h2>
+
+      <h3>Жизненные циклы в одну таблицу</h3>
+      <table>
+        <thead><tr><th>Lifetime</th><th>Сколько живёт</th><th>Типичный пример</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Transient</strong></td><td>Каждый раз новый</td><td>мапперы, лёгкие сервисы</td></tr>
+          <tr><td><strong>Scoped</strong></td><td>Один на запрос/scope</td><td><code>DbContext</code>, репозитории</td></tr>
+          <tr><td><strong>Singleton</strong></td><td>Один на всё приложение</td><td>конфиг, кэши, инфраструктура</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Captive Dependency — карточка</h3>
+      <ul>
+        <li><strong>Что это:</strong> долгоживущий держит короткоживущего (Singleton → Scoped).</li>
+        <li><strong>Частый случай:</strong> Singleton → <code>DbContext</code>.</li>
+        <li><strong>Симптомы:</strong> рост памяти, ошибки конкурентности у <code>DbContext</code>, «старые» данные.</li>
+        <li><strong>Как поймать:</strong> <code>ValidateScopes = true</code> + <code>ValidateOnBuild = true</code>;
+          тест, резолвящий все сервисы; код-ревью.</li>
+        <li><strong>Как чинить:</strong> <code>IServiceScopeFactory</code> → <code>CreateScope()</code>;
+          scope на операцию / итерацию.</li>
+      </ul>
+
+      <h3>Быстрые ассоциации «боль → решение»</h3>
+      <ul>
+        <li>Ручные <code>new</code> и статика → завести в DI (constructor injection).</li>
+        <li><code>HttpContext.Current</code> → <code>IHttpContextAccessor</code>.</li>
+        <li><code>Web.config</code> → <code>IConfiguration</code> + <code>IOptions*</code>.</li>
+        <li><code>InstancePerRequest</code> → <code>Scoped</code>.</li>
+        <li>Singleton нужен доступ к БД → <code>IServiceScopeFactory</code> + <code>CreateScope()</code>.</li>
+        <li>Боюсь сломать граф → <code>ValidateScopes</code>/<code>ValidateOnBuild</code> + тест.</li>
+      </ul>
+
+      <h3>Чего НЕ надо на этом уровне</h3>
+      <div class="box warn">
+        <p>Достаточно знать по верхам: различия keyed-сервисов, кастомные <code>IServiceProvider</code>,
+        декораторы через сторонние контейнеры, source generators для DI. Уверенно рассказать базу
+        (lifetimes + captive + валидация) важнее, чем блеснуть деталями.</p>
+      </div>
+
+      <footer>
+        <p><strong>Как готовиться:</strong> разделы 0–3 — понять, 4 — запомнить способы ловли captive,
+        затем проговорить вслух §6. §7 просмотри за час до интервью.</p>
+        <p><a href="q1-high-load.html">← Вопрос 1: высокая нагрузка</a> · <a href="index.html">Все вопросы</a></p>
+      </footer>
+    </section>
+  </article>
+  </main>
+</div>
+<script>
+  if (window.hljs) { hljs.highlightAll(); }
+</script>
+</body>
+</html>

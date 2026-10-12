@@ -1,6 +1,15 @@
-# Высокая нагрузка в .NET — подготовка (продвинутый middle)
+# Подготовка к собеседованию (.NET) — конспекты
 
-Материал к вопросу: **высокая пропускная способность и низкая задержка в .NET**.
+Разборы вопросов по резюме, уровень **продвинутый middle**. Веб-версия (удобно с телефона):
+
+- **[Вопрос 1 — Высокая пропускная способность и низкая задержка в .NET](q1-high-load.html)**
+- **[Вопрос 2 — Миграция DI и жизненных циклов: .NET Framework → .NET Core](q2-di-lifetimes.html)**
+
+Ниже — те же материалы в формате Markdown.
+
+---
+
+# Вопрос 1. Высокая нагрузка в .NET (продвинутый middle)
 
 Две метрики, которые стоит назвать сразу:
 
@@ -212,5 +221,110 @@ finally { Gate.Release(); }
 
 **Чего НЕ надо на этом уровне:** устройство GC/LOH-компакция, `IValueTaskSource`, Pipelines, native AOT,
 fine-tuning GC. Достаточно знать, что это и зачем.
+
+---
+
+# Вопрос 2. Миграция DI и жизненных циклов: .NET Framework → .NET Core
+
+## 0. Столкновение двух миров
+
+В .NET Framework DI был **сторонним и опциональным** (Unity, Autofac, Ninject через `IDependencyResolver`),
+а в .NET Core DI **встроенный и обязательный** — через Generic Host проходит всё приложение.
+
+| Аспект | .NET Framework (MVC/WPF) | .NET Core |
+|---|---|---|
+| DI | не встроен, сторонний | встроенный `Microsoft.Extensions.DependencyInjection`, Generic Host |
+| Получение зависимости | `new`, service locator | constructor injection |
+| HttpContext | `HttpContext.Current` | `IHttpContextAccessor` |
+| Конфигурация | Web.config, `ConfigurationManager` | `IConfiguration` + `IOptions*` |
+| «На запрос» | `InstancePerRequest` | `Scoped` |
+| Точка старта | Global.asax / OWIN | `Program` + Host |
+| Валидация графа | нет | `ValidateScopes` / `ValidateOnBuild` |
+
+## 1. Главные боли миграции
+
+- Разбросанный `new` и статика → заводим в DI.
+- **Service Locator** (`DependencyResolver.Current`) → constructor injection.
+- `HttpContext.Current` больше нет → `IHttpContextAccessor`.
+- Возможности сторонних контейнеров (property injection, child-контейнеры, интерцепторы) во встроенном DI отсутствуют.
+- Конфигурация: `Web.config`/`ConfigurationManager` → `IConfiguration` + `IOptions*`.
+- **WPF**: не было хоста → поднимали Generic Host, view-модели в DI.
+- Осознанно разложить lifetimes.
+
+## 2. Жизненные циклы
+
+| Lifetime | Сколько живёт | Пример |
+|---|---|---|
+| **Transient** | каждый раз новый | мапперы, лёгкие сервисы |
+| **Scoped** | один на запрос/scope | `DbContext`, репозитории |
+| **Singleton** | один на приложение | конфиг, кэши, инфраструктура |
+
+> ★ Золотое правило: **Singleton не зависит от Scoped**.
+
+`DbContext` по умолчанию — Scoped. В фоне/консоли scope создаём сами.
+
+## 3. Captive Dependency
+
+Долгоживущий держит короткоживущего. Самый частый случай — **Singleton → `DbContext` (Scoped)**.
+
+```csharp
+// ✘ Singleton зависит от Scoped → captive
+builder.Services.AddSingleton<ReportService>();
+builder.Services.AddDbContext<AppDbContext>(o => o.UseNpgsql(cs));
+
+public sealed class ReportService(AppDbContext db) { /* ... */ }
+```
+
+Чем плохо: рост памяти, ошибки конкурентности (`A second operation started on this context...`), «старые» данные.
+
+Правильно — scope на операцию:
+
+```csharp
+public sealed class ReportService(IServiceScopeFactory scopeFactory)
+{
+    public async Task<Report> BuildAsync(CancellationToken ct)
+    {
+        using var scope = scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        return await db.Reports.AsNoTracking().FirstAsync(ct);
+    }
+}
+```
+
+## 4. Как отлавливать
+
+1. **Валидация графа на старте:**
+```csharp
+builder.Host.UseDefaultServiceProvider(o => { o.ValidateScopes = true; o.ValidateOnBuild = true; });
+```
+`ValidateScopes` ловит Singleton→Scoped; `ValidateOnBuild` проверяет весь граф при старте.
+
+2. **Тест-«сторож»**, который резолвит все сервисы в scope.
+
+3. **Код-ревью и правила**: Singleton — только stateless; красные флаги — `IServiceProvider`/`DbContext` в Singleton.
+
+Симптомы в рантайме: рост памяти, ошибки конкурентности, устаревшие данные.
+
+## 5. Приёмы
+
+- `BackgroundService` (Singleton): **scope на каждую итерацию** через `IServiceScopeFactory`.
+- `IOptions` (singleton) / `IOptionsSnapshot` (scoped) / `IOptionsMonitor` (singleton).
+- `IHttpClientFactory` вместо `new HttpClient()` в Singleton.
+- WPF: Generic Host + DI; VM/окна — не Singleton (иначе утечки подписок).
+
+## 6. Готовый ответ (2–3 минуты)
+
+1. В .NET Core DI встроенный и обязательный; незарегистрированная зависимость = падение на старте.
+2. Боли: ручные `new`/статика/service locator → DI; `HttpContext.Current` → `IHttpContextAccessor`; Web.config → IOptions; WPF → Generic Host.
+3. Lifetimes: Transient/Scoped/Singleton; правило — Singleton не зависит от Scoped.
+4. Captive Dependency (#1 — Singleton→DbContext): ловим `ValidateScopes`/`ValidateOnBuild` + тестом; чиним через `IServiceScopeFactory`.
+
+## 7. Шпаргалка
+
+- Transient — новый каждый раз; Scoped — один на запрос (DbContext); Singleton — один на приложение.
+- Captive = Singleton → Scoped.
+- Поймать: `ValidateScopes` + `ValidateOnBuild`; тест, резолвящий всё.
+- Починить: `IServiceScopeFactory.CreateScope()`; scope на операцию/итерацию.
+- Ассоциации: `HttpContext.Current` → `IHttpContextAccessor`; `InstancePerRequest` → `Scoped`; `Web.config` → `IOptions*`.
 
 
