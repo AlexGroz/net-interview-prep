@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Быстрая подготовка · Высокая нагрузка в .NET (продвинутый middle)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css">
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/csharp.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/sql.min.js"></script>
+<style>
+  :root{
+    --bg:#f7f8fb; --ink:#1c2230; --muted:#5a6478; --line:#e3e7f0;
+    --brand:#4f46e5; --tip:#0f9d58; --warn:#d97706; --gold:#b45309; --note:#2563eb;
+    --code-bg:#0d1117; --shadow:0 10px 30px rgba(20,28,60,.08);
+    --mono:"JetBrains Mono","Fira Code",ui-monospace,Menlo,Consolas,monospace;
+    --sans:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.7;-webkit-font-smoothing:antialiased}
+  .layout{display:grid;grid-template-columns:280px minmax(0,1fr);max-width:1280px;margin:0 auto}
+  aside{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:28px 20px 60px;border-right:1px solid var(--line);background:linear-gradient(180deg,#fff,#f4f6fc)}
+  aside .brandsmall{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--brand);font-weight:700}
+  aside h2{font-size:16px;margin:6px 0 18px;line-height:1.35}
+  aside nav a{display:block;color:var(--muted);text-decoration:none;font-size:14.5px;padding:7px 12px;border-radius:9px;transition:.15s}
+  aside nav a:hover{background:#eef1fa;color:var(--ink)}
+  main{padding:44px 54px 110px}
+  article{max-width:860px;margin:0 auto}
+  .hero{background:linear-gradient(135deg,#4f46e5,#0ea5e9);color:#fff;border-radius:14px;padding:36px 40px;box-shadow:var(--shadow);margin-bottom:36px}
+  .hero .kicker{font-size:12.5px;text-transform:uppercase;letter-spacing:.16em;opacity:.9;font-weight:700}
+  .hero h1{font-size:31px;line-height:1.2;margin:12px 0;font-weight:800}
+  .hero p{margin:0;font-size:17px;opacity:.96;max-width:60ch}
+  .hero .meta{margin-top:18px;font-size:13.5px;opacity:.9;border-top:1px solid rgba(255,255,255,.3);padding-top:12px}
+  h2{font-size:25px;margin:52px 0 14px;padding-bottom:10px;border-bottom:2px solid var(--line)}
+  h3{font-size:19px;margin:30px 0 8px}
+  p{margin:12px 0}
+  ul,ol{margin:12px 0;padding-left:24px}
+  li{margin:6px 0}
+  strong{color:#111726}
+  code{font-family:var(--mono);font-size:.9em;background:#eef1f8;color:#b4007a;padding:2px 6px;border-radius:6px;border:1px solid #e0e5f2}
+  pre{background:var(--code-bg);border-radius:12px;padding:18px 20px;overflow:auto;box-shadow:var(--shadow);border:1px solid #1b2434;margin:16px 0}
+  pre code{background:none;color:#e6edf3;border:none;padding:0;font-size:14px;line-height:1.6}
+  .codewrap{margin:16px 0}
+  .codewrap .cap{font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:600}
+  .box{border-radius:12px;padding:15px 20px;margin:18px 0;border-left:5px solid;background:#fff;box-shadow:var(--shadow)}
+  .box .t{font-weight:800;font-size:13.5px;letter-spacing:.03em;text-transform:uppercase;margin-bottom:5px;display:block}
+  .box p:first-of-type{margin-top:0}.box p:last-child{margin-bottom:0}
+  .tip{border-color:var(--tip)} .tip .t{color:var(--tip)}
+  .warn{border-color:var(--warn)} .warn .t{color:var(--warn)}
+  .gold{border-color:var(--gold);background:linear-gradient(180deg,#fffdf5,#fff)} .gold .t{color:var(--gold)}
+  .note{border-color:var(--note)} .note .t{color:var(--note)}
+  table{border-collapse:collapse;width:100%;margin:18px 0;font-size:15px;background:#fff;box-shadow:var(--shadow);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#eef1fa;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:#38405a}
+  tr:last-child td{border-bottom:none}
+  .qa{border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);padding:4px 22px;margin:18px 0}
+  .qa .q{font-weight:800;color:var(--brand)}
+  footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+  @media(max-width:960px){
+    .layout{grid-template-columns:1fr}
+    aside{position:static;height:auto;border-right:none;border-bottom:1px solid var(--line)}
+    main{padding:24px 16px 70px}
+    .hero{padding:26px 22px}.hero h1{font-size:25px}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <div class="brandsmall">.NET Backend · Middle+</div>
+    <h2>Высокая нагрузка в .NET — быстрая подготовка</h2>
+    <nav>
+      <a href="#expect">0. Что реально ждут от middle+</a>
+      <a href="#async">1. Асинхронность — главное</a>
+      <a href="#pool">2. Пул потоков простыми словами</a>
+      <a href="#memory">3. Память и GC — база</a>
+      <a href="#data">4. Данные и кэш</a>
+      <a href="#metrics">5. Измеряемость</a>
+      <a href="#answer">6. Готовый ответ (2–3 мин)</a>
+      <a href="#cheat">7. Шпаргалка</a>
+    </nav>
+  </aside>
+  <main>
+  <article>
+    <div class="hero">
+      <div class="kicker">Подготовка к собеседованию · Middle+</div>
+      <h1>Высокая пропускная способность и низкая задержка в .NET</h1>
+      <p>Коротко и по делу: что действительно нужно знать на уровне продвинутого middle, чтобы уверенно
+         ответить на вопрос про высоконагруженную серверную логику. Без углубления в рантайм.</p>
+      <div class="meta">Алексей Грознов · разбор вопроса по резюме (.NET Core / .NET 8–9, ASP.NET Core, EF Core, Oracle/PostgreSQL)</div>
+    </div>
+
+    <section id="expect">
+      <h2>0. Что реально ждут от продвинутого middle</h2>
+      <p>На этом уровне от вас <strong>не ждут</strong> знания внутренностей GC, <code>IValueTaskSource</code>
+        или тонкостей работы планировщика. Ждут другое: что вы понимаете <em>принципы</em> и умеете применять
+        их в обычном коде. Типичный «правильный» ответ строится из четырёх мыслей:</p>
+
+      <ol>
+        <li><strong>Не блокировать потоки</strong> — использовать async/await правильно.</li>
+        <li><strong>Не создавать лишний мусор</strong> — понимать, что лишние аллокации нагружают GC.</li>
+        <li><strong>Не ходить в БД и по сети лишний раз</strong> — кэш, нормальные запросы.</li>
+        <li><strong>Опираться на измерения</strong> — смотреть на цифры, а не угадывать.</li>
+      </ol>
+
+      <p>Если вы назовёте эти четыре вещи и приведёте по одному примеру из своей практики — вы уже дадите
+        сильный ответ. Всё остальное (детали) интервьюер спросит уточняющими вопросами, и вы будете готовы.</p>
+
+      <div class="box note">
+        <span class="t">Две метрики, которые стоит назвать сразу</span>
+        <p><strong>Пропускная способность (throughput)</strong> — сколько запросов в секунду держит сервис.
+          <strong>Задержка (latency)</strong> — сколько идёт один запрос; здесь важны не средние, а «хвосты»
+          <code>p95 / p99</code>: именно редкие медленные запросы портят картину.</p>
+      </div>
+
+      <div class="box tip">
+        <span class="t">Ваш козырь в этом вопросе</span>
+        <p>У вас сильный профиль по данным (<strong>Oracle, PostgreSQL, EF Core, оптимизация SQL</strong>).
+          В реальных корпоративных системах узкое место под нагрузкой — чаще всего <strong>не C#, а БД</strong>.
+          Обязательно скажите об этом: это сразу поднимает уровень ответа выше среднего.</p>
+      </div>
+    </section>
+
+    <section id="async">
+      <h2>1. Асинхронность — главное, что спросят</h2>
+
+      <p><strong>Суть одной фразой:</strong> асинхронность позволяет не занимать поток, пока мы ждём
+        I/O (запрос в БД, обращение к сервису, чтение файла). Пока операция ждёт — поток свободен и
+        обслуживает другие запросы. Именно поэтому сервер держит тысячи одновременных запросов небольшим
+        числом потоков.</p>
+
+      <h3>Правило №1: async до конца</h3>
+      <p>Если метод асинхронный — он должен быть асинхронным на всём пути, от эндпоинта до последнего слоя.
+        Смешивание async и синхронного ожидания — самая частая ошибка, которую ищет интервьюер.</p>
+
+      <div class="codewrap">
+        <p class="cap">Так — плохо: поток застревает в ожидании</p>
+        <pre><code class="language-csharp">// ✘ Самая опасная строка на сервере:
+var user = GetUserAsync(id).Result;   // или .Wait() — поток занят, но простаивает
+// При нагрузке это приводит к «голоданию» пула потоков (см. раздел 2).</code></pre>
+      </div>
+
+      <div class="codewrap">
+        <p class="cap">Так — правильно</p>
+        <pre><code class="language-csharp">public async Task&lt;IActionResult&gt; Get(int id, CancellationToken ct)
+{
+    var user = await _service.GetUserAsync(id, ct); // поток освобождается на время I/O
+    return Ok(user);
+}</code></pre>
+      </div>
+
+      <h3>async/await — что полезно знать</h3>
+      <ul>
+        <li>Компилятор превращает <code>async</code>-метод в <strong>машину состояний</strong>; в точке
+          <code>await</code> поток освобождается и возвращается к обработке других запросов.</li>
+        <li><code>async void</code> — только для обработчиков событий UI. В серверном коде — нет: исключения
+          из такого метода поймать нельзя.</li>
+        <li>Не нужен <code>Task.Run</code> «чтобы было асинхронно» на сервере — это лишняя работа, а не ускорение.</li>
+        <li>Несколько независимых запросов можно запускать параллельно через <code>Task.WhenAll</code>, а не
+          ждать их по очереди.</li>
+      </ul>
+
+      <div class="codewrap">
+        <p class="cap">Параллельно, а не последовательно</p>
+        <pre><code class="language-csharp">// ✘ Последовательно: 2 запроса по 100 мс = 200 мс
+var a = await GetAAsync(ct);
+var b = await GetBAsync(ct);
+
+// ✔ Параллельно: ~100 мс (запросы независимы)
+var taskA = GetAAsync(ct);
+var taskB = GetBAsync(ct);
+await Task.WhenAll(taskA, taskB);
+var (a2, b2) = (await taskA, await taskB);</code></pre>
+      </div>
+
+      <h3>Task vs ValueTask и ConfigureAwait — коротко</h3>
+      <table>
+        <thead><tr><th>Вопрос</th><th>Что ответить</th></tr></thead>
+        <tbody>
+          <tr><td>Зачем <code>ValueTask</code>?</td><td>Экономит аллокацию, если результат часто готов сразу (например, кэш). В обычном коде хватает <code>Task</code> — <code>ValueTask</code> берут только там, где есть выгода.</td></tr>
+          <tr><td>Зачем <code>ConfigureAwait(false)</code>?</td><td>В библиотеках — чтобы не возвращать продолжение в исходный контекст и избежать проблем с deadlock. В ASP.NET Core своего контекста нет, поэтому там это менее критично.</td></tr>
+          <tr><td>Многопоточность?</td><td>Запускать много задач параллельно — с ограничением. Неограниченный веер запросов исчерпает пул соединений к БД и обрушит задержки.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="box gold">
+        <span class="t">★ Фраза для интервью</span>
+        <p>«Основное правило — async/await без блокировок на всём пути. Пока ждём I/O, поток не занят и
+          обслуживает другие запросы — отсюда и высокая пропускная способность.»</p>
+      </div>
+    </section>
+
+    <section id="pool">
+      <h2>2. Пул потоков простыми словами</h2>
+
+      <p>Создавать поток под каждый запрос дорого: у потока есть стек и переключения контекста. Поэтому .NET
+        держит <strong>пул потоков</strong> — набор готовых потоков, которые переиспользуются. По умолчанию
+        их примерно <strong>по числу ядер</strong>.</p>
+
+      <h3>Что такое «голодание» пула (thread pool starvation)</h3>
+      <p>Представьте: в пуле 8 потоков. Восемь запросов заняли их и... <strong>заблокировались</strong>
+        на <code>.Result</code>, ожидая ответа БД. Потоки заняты, но бесполезны. Девятый запрос ждёт в
+        очереди. Пул добавляет новые потоки медленно — примерно по одному за 500 мс. Итог: задержка
+        вырастает до секунд, хотя CPU почти свободен.</p>
+
+      <div class="box warn">
+        <span class="t">Как это распознать</span>
+        <p>Признак голодания — растёт <strong>очередь пула</strong> и <strong>число потоков</strong>, а
+          задержка при этом огромная. Ищем причину: где-то есть блокирующее ожидание
+          (<code>.Result</code>, <code>.Wait()</code>, <code>Thread.Sleep</code>, синхронный вызов БД/сети).</p>
+      </div>
+
+      <div class="box tip">
+        <span class="t">Вывод для ответа</span>
+        <p>«Я не блокирую потоки пула и не создаю их вручную. Правило простое: I/O — только асинхронно,
+          чтобы поток не ждал, а работал. Именно это защищает от голодания пула под нагрузкой.»</p>
+      </div>
+
+      <p>Иногда (например, в legacy-коде с неизбежным блокирующим вызовом) временно поднимают минимальное
+        число потоков, но это <strong>лечение симптома</strong>. Правильное решение — убрать блокировку.</p>
+    </section>
+
+    <section id="memory">
+      <h2>3. Память и Garbage Collector — база</h2>
+
+      <p>Ключевая мысль, которую ждёт интервьюер: <strong>проблема не в объёме памяти, а в скорости
+        аллокаций</strong>. Чем больше мусора создаёт сервис в секунду, тем чаще работает GC и тем больше CPU
+        уходит не на полезную работу, а на сборку. В редких случаях сборки дают заметные паузы (задержки).</p>
+
+      <h3>Что полезно знать про GC</h3>
+      <ul>
+        <li>GC <strong>поколенческий</strong>: молодые объекты (Gen0) собираются часто и дёшево; долгоживущие
+          (Gen2) — редко и дороже.</li>
+        <li>Крупные объекты (массивы от ~85 КБ) попадают в <strong>LOH</strong> и собираются вместе с Gen2 —
+          их лучше переиспользовать, а не создавать заново.</li>
+        <li>На сервере обычно включён <strong>Server GC</strong> — он рассчитан на высокую пропускную
+          способность.</li>
+      </ul>
+
+      <p>Правильный практический вывод: <strong>стараться не создавать лишние объекты на горячем пути</strong>.
+        Не нужно знать устройство GC досконально — достаточно понимать эту связь.</p>
+
+      <h3>Откуда берётся «лишний» мусор</h3>
+      <table>
+        <thead><tr><th>Источник</th><th>Чем заменить</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Boxing</strong> — упаковка struct в object (например, <code>ArrayList</code>)</td><td>Generic-коллекции: <code>List&lt;int&gt;</code> вместо <code>ArrayList</code></td></tr>
+          <tr><td>Конкатенация строк в цикле</td><td><code>StringBuilder</code></td></tr>
+          <tr><td>Тяжёлые LINQ-цепочки в горячем коде</td><td>Обычный цикл <code>for</code></td></tr>
+          <tr><td>Исключения как поток управления</td><td>Методы-проверки <code>Try*</code> (<code>TryParse</code>)</td></tr>
+          <tr><td>Частые крупные буферы</td><td><code>ArrayPool&lt;T&gt;</code> — переиспользование массивов</td></tr>
+        </tbody>
+      </table>
+
+      <div class="codewrap">
+        <p class="cap">Простой пример: убрали boxing и мусор от строк</p>
+        <pre><code class="language-csharp">// ✘ ArrayList упаковывает каждый int в объект → мусор
+var list = new ArrayList();
+list.Add(42);
+
+// ✔ Generic-коллекция: int хранится как int
+var list2 = new List&lt;int&gt;();
+list2.Add(42);
+
+// ✘ Конкатенация в цикле создаёт строку на каждой итерации
+string s = "";
+for (int i = 0; i &lt; 1000; i++) s += i + ",";
+
+// ✔ Один буфер
+var sb = new StringBuilder(4096);
+for (int i = 0; i &lt; 1000; i++) sb.Append(i).Append(',');
+var result = sb.ToString();</code></pre>
+      </div>
+
+      <div class="box note">
+        <span class="t">Что можно знать «по верхам» (и не углубляться на middle)</span>
+        <p><code>Span&lt;T&gt;</code> и <code>ArrayPool&lt;T&gt;</code> — это инструменты для горячих путей:
+          «умею применять, когда нужно, но в обычном коде не усложняю». Достаточно сказать, что знаете <em>что
+          это</em> и <em>зачем</em>. Глубокие детали на этом уровне обычно не спрашивают.</p>
+      </div>
+    </section>
+
+    <section id="data">
+      <h2>4. Данные и кэш — где на самом деле живёт нагрузка</h2>
+
+      <p>Это ваш сильный раздел (EF Core, Oracle/PostgreSQL, оптимизация SQL). Под нагрузкой сервис чаще всего
+        упирается <strong>не в C#, а в количество и качество обращений к БД</strong>. Несколько практик, которые
+        стоит назвать:</p>
+
+      <table>
+        <thead><tr><th>Что делаю</th><th>Зачем</th></tr></thead>
+        <tbody>
+          <tr><td><code>AsNoTracking()</code> для read-only запросов</td><td>EF не тратит CPU на отслеживание изменений</td></tr>
+          <tr><td>Проекция в DTO через <code>Select</code></td><td>В БД уходит только нужный SQL, тянем меньше данных</td></tr>
+          <tr><td>Борюсь с N+1 запросами (<code>Include</code>, проекции)</td><td>Вместо 1000 запросов — один</td></tr>
+          <tr><td><code>ExecuteUpdate/ExecuteDelete</code> для массовых операций</td><td>Один UPDATE на стороне БД вместо загрузки тысяч строк</td></tr>
+          <tr><td>Индексы и анализ плана через <code>EXPLAIN ANALYZE</code></td><td>Убираю Seq Scan и медленные запросы — мой опыт с PostgreSQL</td></tr>
+        </tbody>
+      </table>
+
+      <div class="codewrap">
+        <p class="cap">Плохо и правильно: один и тот же запрос к БД</p>
+        <pre><code class="language-csharp">// ✘ Грузим всю сущность, отслеживаем изменения, маппим вручную
+var users = await _db.Users.ToListAsync();
+var dtos = users.Select(u =&gt; new UserDto(u.Id, u.Name)).ToList();
+
+// ✔ Проекция выполняется в БД, только нужные колонки, без tracking
+var dtos2 = await _db.Users
+    .AsNoTracking()
+    .Where(u =&gt; u.IsActive)
+    .Select(u =&gt; new UserDto(u.Id, u.Name))   // SELECT Id, Name FROM Users WHERE IsActive
+    .ToListAsync(ct);</code></pre>
+      </div>
+
+      <h3>Кэширование</h3>
+      <ul>
+        <li><strong>In-memory</strong> (<code>IMemoryCache</code>) — быстро и просто; для справочников,
+          настроек, горячих данных. Живёт в пределах одного инстанса.</li>
+        <li><strong>Распределённый</strong> (<code>IDistributedCache</code>, обычно Redis) — общий для всех
+          инстансов.</li>
+      </ul>
+
+      <div class="box warn">
+        <span class="t">Две частые ошибки с кэшем</span>
+        <p>1) Нет <strong>инвалидации</strong>: данные изменились, а в кэше остался старый ответ — используйте
+          TTL и сброс по событию изменения. 2) <strong>Cache stampede</strong>: популярный ключ истёк, и
+          множество запросов одновременно идут в БД — лечится короткой блокировкой на перезагрузку или
+          готовыми решениями.</p>
+      </div>
+
+      <h3>Пул соединений к БД и backpressure</h3>
+      <p>Соединения к БД — <strong>ограниченный ресурс</strong>. Если пустить параллельно больше запросов, чем
+        есть соединений, остальные встанут в очередь, задержки вырастут, а дальше пойдут таймауты по цепочке.
+        Поэтому число одновременных операций ограничивают (например, счётчиком), а лишние запросы — отсекают.</p>
+
+      <div class="codewrap">
+        <p class="cap">Ограничение параллелизма — простой и важный приём</p>
+        <pre><code class="language-csharp">// Не более 8 одновременных операций — защита пула соединений
+private static readonly SemaphoreSlim Gate = new(8);
+
+await Gate.WaitAsync(ct);
+try   { await ProcessOneAsync(id, ct); }
+finally { Gate.Release(); }</code></pre>
+      </div>
+
+      <div class="box gold">
+        <span class="t">★ Готовый тезис под ваше резюме</span>
+        <p>«Под нагрузкой я прежде всего смотрю на данные: отключаю tracking для чтения, использую проекции,
+          борюсь с N+1, выношу массовые операции в set-based SQL или хранимые процедуры, проверяю план
+          запроса. Индексы и план — это моя зона с Oracle и PostgreSQL. Часто это даёт кратный рост
+          пропускной способности без оптимизаций в C#.»</p>
+      </div>
+    </section>
+
+    <section id="metrics">
+      <h2>5. Измеряемость — коротко, но обязательно</h2>
+
+      <p>Достаточно показать, что вы оптимизируете <strong>по факту, а не по ощущениям</strong>. На middle+
+        этого хватает:</p>
+
+      <ul>
+        <li><strong>Latency смотрю по p95/p99</strong>, а не по среднему — среднее скрывает редкие «тормоза».</li>
+        <li><strong>Профайлер/счётчики рантайма</strong> — <code>dotnet-counters</code>: видно очередь потоков,
+          скорость аллокаций, счётчики GC. Основной инструмент «посмотреть живьём».</li>
+        <li><strong>Микробенчмарки</strong> — <strong>BenchmarkDotNet</strong>, когда нужно сравнить два варианта
+          кода (и увидеть аллокации).</li>
+        <li><strong>Нагрузочный тест</strong> — k6 или подобное, чтобы понять, сколько сервис реально держит.</li>
+        <li><strong>План запроса</strong> — <code>EXPLAIN ANALYZE</code> (PostgreSQL), когда тормозит БД.</li>
+      </ul>
+
+      <div class="box gold">
+        <span class="t">★ Правильная фраза</span>
+        <p>«Сначала измеряю — строю baseline и нахожу узкое место (чаще это БД или I/O, а не C#). Потом
+          оптимизирую и измеряю снова. Оптимизация без метрики может сделать хуже.»</p>
+      </div>
+
+      <div class="box note">
+        <span class="t">Простой порядок разбора «тормозит под нагрузкой»</span>
+        <ol>
+          <li>Растёт p99 при высокой нагрузке → смотрим <code>dotnet-counters</code>.</li>
+          <li>Растёт очередь потоков → ищем блокирующие вызовы (<code>.Result</code>/<code>.Wait()</code>).</li>
+          <li>Высокая скорость аллокаций / частые Gen0-Gen2 → ищем лишний мусор.</li>
+          <li>Ждём соединения из пула → проблема в БД или отсутствии кэша.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="answer">
+      <h2>6. Готовый ответ (2–3 минуты)</h2>
+      <p>Это то, что стоит проговорить вслух несколько раз. Разбито на четыре короткие мысли — их легко
+        запомнить.</p>
+
+      <div class="qa">
+        <p><span class="q">1. Асинхронность.</span> «Главное — не занимать поток, пока ждём I/O.
+          Я держу весь путь асинхронным: нет <code>.Result</code> и <code>.Wait()</code> на сервере. Пока
+          запрос ждёт ответа БД или другого сервиса, поток свободен и обслуживает другие запросы — за счёт
+          этого и получается высокая пропускная способность.»</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="q">2. Потоки.</span> «Потоки берутся из пула, и я их не блокирую специально, потому
+          что блокировка ведёт к «голоданию» пула: потоки заняты, но простаивают, а новые добавляются
+          медленно — задержка резко растёт. Правило простое: I/O только асинхронно.»</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="q">3. Память.</span> «Понимаю, что под нагрузкой важна не память, а скорость
+          аллокаций: чем больше мусора, тем чаще работает GC и тем больше CPU уходит не на работу. Поэтому в
+          горячих местах избегаю лишних аллокаций: generic-коллекции вместо boxing, <code>StringBuilder</code>
+          вместо конкатенации строк, не использую исключения как поток управления. А <code>Span</code> и пулы
+          применяю точечно, где действительно нужно.»</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="q">4. Данные и измерения.</span> «На практике узкое место чаще всего в БД. Поэтому
+          <code>AsNoTracking</code> и проекции в EF Core, борьба с N+1, массовые операции через set-based SQL
+          или хранимые процедуры, проверка плана запроса. Плюс кэш на чтение. И всегда — по измерениям: смотрю
+          p95/p99, счётчики рантайма через <code>dotnet-counters</code>, а не оптимизирую на глаз.»</p>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--line);margin:26px 0">
+
+      <div class="qa"><p class="q">Если спросят: «Где почитать / что смотрели?»</p>
+        <p>Достаточно назвать практики, которые реально применяли: <code>AsNoTracking</code>, проекции,
+          <code>SemaphoreSlim</code> для ограничения параллелизма, <code>IMemoryCache</code>,
+          <code>dotnet-counters</code>. Не нужно перечислять то, чего не делали.</p>
+      </div>
+
+      <div class="qa"><p class="q">Если спросят про конкретный кейс</p>
+        <p>Расскажите из своего опыта: оптимизация запроса или миграция данных Oracle→PostgreSQL, где вы
+          убрали лишние обращения к БД и/или ускорили запрос. Конкретный пример ценится выше теории.</p>
+      </div>
+    </section>
+
+    <section id="cheat">
+      <h2>7. Шпаргалка</h2>
+
+      <h3>Четыре мысли, которые покрывают вопрос</h3>
+      <table>
+        <thead><tr><th>Слой</th><th>Что сказать</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Асинхронность</strong></td><td>async/await до конца, без <code>.Result</code>/<code>.Wait()</code></td></tr>
+          <tr><td><strong>Потоки</strong></td><td>не блокировать пул → нет thread pool starvation</td></tr>
+          <tr><td><strong>Память</strong></td><td>меньше аллокаций → меньше работы GC</td></tr>
+          <tr><td><strong>Данные</strong></td><td>кэш, проекции, <code>AsNoTracking</code>, борьба с N+1, план запроса</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Быстрые ассоциации «проблема → приём»</h3>
+      <ul>
+        <li>Поток простаивает → <strong>async/await</strong>.</li>
+        <li>Пул «голодает» → убрать <strong>блокирующие вызовы</strong>.</li>
+        <li>Много мусора → generic-коллекции, <code>StringBuilder</code>, меньше LINQ в горячем коде.</li>
+        <li>Много запросов в БД → <strong>кэш</strong>, проекции, <code>AsNoTracking</code>, борьба с N+1.</li>
+        <li>Перегрузка → <strong>ограничение параллелизма</strong> и rate limiting.</li>
+        <li>«Где тормозит?» → <strong>p95/p99</strong>, <code>dotnet-counters</code>, <code>EXPLAIN ANALYZE</code>.</li>
+      </ul>
+
+      <h3>Чего НЕ надо (на этом уровне)</h3>
+      <div class="box warn">
+        <p>Не углубляйтесь, если не спросят: устройство GC и LOH-компакция, <code>IValueTaskSource</code>,
+        <code>System.IO.Pipelines</code>, native AOT, fine-tuning GC. Достаточно знать, что эти вещи
+        существуют и зачем они. Отвечать надо уверенно о <strong>базе</strong>, а не блеснуть редкими деталями.</p>
+      </div>
+
+      <h3>Фраза-итог</h3>
+      <div class="box gold">
+        <p>«Высокая пропускная способность — это когда потоки не простаивают, память не мусорится без нужды,
+          а в БД и по сети мы ходим ровно столько, сколько нужно. Низкая задержка — это когда я измеряю
+          хвосты p99 и убираю то, что показал профайлер.»</p>
+      </div>
+
+      <footer>
+        <p><strong>Как готовиться:</strong> прочитайте разделы 0–5 (это ~15 минут), затем несколько раз
+          проговорите вслух §6 «Готовый ответ». §7 просмотрите за час до интервью.</p>
+        <p>Уровень: <strong>продвинутый middle</strong>. Углублённые детали (устройство GC, AOT,
+          Pipelines) — по мере необходимости, уже на собеседовании или позже.</p>
+        <p>Подготовлено по резюме «Алексей Грознов · Backend-разработчик (.NET Core / .NET 8–9, ASP.NET Core,
+          EF Core, Oracle/PostgreSQL)». Удачи!</p>
+      </footer>
+    </section>
+  </article>
+  </main>
+</div>
+<script>
+  if (window.hljs) { hljs.highlightAll(); }
+</script>
+</body>
+</html>
