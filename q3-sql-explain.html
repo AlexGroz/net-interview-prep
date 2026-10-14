@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вопрос 3 · Оптимизация SQL в PostgreSQL</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css">
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/sql.min.js"></script>
+<style>
+  :root{
+    --bg:#f7f8fb; --ink:#1c2230; --muted:#5a6478; --line:#e3e7f0;
+    --brand:#4f46e5; --tip:#0f9d58; --warn:#d97706; --gold:#b45309; --note:#2563eb;
+    --code-bg:#0d1117; --shadow:0 10px 30px rgba(20,28,60,.08);
+    --mono:"JetBrains Mono","Fira Code",ui-monospace,Menlo,Consolas,monospace;
+    --sans:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.7;-webkit-font-smoothing:antialiased}
+  .layout{display:grid;grid-template-columns:280px minmax(0,1fr);max-width:1280px;margin:0 auto}
+  aside{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:28px 20px 60px;border-right:1px solid var(--line);background:linear-gradient(180deg,#fff,#f4f6fc)}
+  aside .brandsmall{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--brand);font-weight:700}
+  aside h2{font-size:16px;margin:6px 0 18px;line-height:1.35}
+  aside nav a{display:block;color:var(--muted);text-decoration:none;font-size:14.5px;padding:7px 12px;border-radius:9px;transition:.15s}
+  aside nav a:hover{background:#eef1fa;color:var(--ink)}
+  main{padding:44px 54px 110px}
+  article{max-width:860px;margin:0 auto}
+  .hero{background:linear-gradient(135deg,#4f46e5,#0ea5e9);color:#fff;border-radius:14px;padding:36px 40px;box-shadow:var(--shadow);margin-bottom:36px}
+  .hero .kicker{font-size:12.5px;text-transform:uppercase;letter-spacing:.16em;opacity:.9;font-weight:700}
+  .hero h1{font-size:30px;line-height:1.2;margin:12px 0;font-weight:800}
+  .hero p{margin:0;font-size:17px;opacity:.96;max-width:60ch}
+  .hero .meta{margin-top:18px;font-size:13.5px;opacity:.9;border-top:1px solid rgba(255,255,255,.3);padding-top:12px}
+  .topnav{margin:0 0 18px;font-size:14.5px;color:var(--muted)}
+  .topnav a{text-decoration:none;font-weight:600}
+  .topnav span{margin:0 9px;color:#c3cad9}
+  h2{font-size:25px;margin:52px 0 14px;padding-bottom:10px;border-bottom:2px solid var(--line)}
+  h3{font-size:19px;margin:30px 0 8px}
+  p{margin:12px 0}
+  ul,ol{margin:12px 0;padding-left:24px}
+  li{margin:6px 0}
+  strong{color:#111726}
+  code{font-family:var(--mono);font-size:.9em;background:#eef1f8;color:#b4007a;padding:2px 6px;border-radius:6px;border:1px solid #e0e5f2}
+  pre{background:var(--code-bg);border-radius:12px;padding:18px 20px;overflow:auto;box-shadow:var(--shadow);border:1px solid #1b2434;margin:16px 0}
+  pre code{background:none;color:#e6edf3;border:none;padding:0;font-size:14px;line-height:1.6}
+  .codewrap{margin:16px 0}
+  .codewrap .cap{font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:600}
+  .box{border-radius:12px;padding:15px 20px;margin:18px 0;border-left:5px solid;background:#fff;box-shadow:var(--shadow)}
+  .box .t{font-weight:800;font-size:13.5px;letter-spacing:.03em;text-transform:uppercase;margin-bottom:5px;display:block}
+  .box p:first-of-type{margin-top:0}.box p:last-child{margin-bottom:0}
+  .tip{border-color:var(--tip)} .tip .t{color:var(--tip)}
+  .warn{border-color:var(--warn)} .warn .t{color:var(--warn)}
+  .gold{border-color:var(--gold);background:linear-gradient(180deg,#fffdf5,#fff)} .gold .t{color:var(--gold)}
+  .note{border-color:var(--note)} .note .t{color:var(--note)}
+  .danger{border-color:#dc2626} .danger .t{color:#dc2626}
+  table{border-collapse:collapse;width:100%;margin:18px 0;font-size:15px;background:#fff;box-shadow:var(--shadow);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#eef1fa;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:#38405a}
+  tr:last-child td{border-bottom:none}
+  .qa{border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);padding:4px 22px;margin:18px 0}
+  .qa .q{font-weight:800;color:var(--brand)}
+  footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+  @media(max-width:960px){
+    .layout{grid-template-columns:1fr}
+    aside{position:static;height:auto;border-right:none;border-bottom:1px solid var(--line)}
+    main{padding:24px 16px 70px}
+    .hero{padding:26px 22px}.hero h1{font-size:24px}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <div class="brandsmall">SQL · PostgreSQL</div>
+    <h2>Вопрос 3. Оптимизация медленного запроса</h2>
+    <nav>
+      <a href="index.html">← Все вопросы</a>
+      <a href="#q3">План действий по шагам</a>
+      <a href="#q3-explain">EXPLAIN (ANALYZE, BUFFERS)</a>
+      <a href="#q3-joins">Типы соединений</a>
+      <a href="#q3-fix">Что делать дальше</a>
+    </nav>
+  </aside>
+  <main>
+  <article>
+    <div class="topnav">
+      <a href="index.html">← Все вопросы</a><span>·</span><a href="q2-di-lifetimes.html">Вопрос 2</a><span>·</span><strong>Вопрос 3: SQL</strong><span>·</span><a href="q4-oracle-to-postgres.html">Вопрос 4</a>
+    </div>
+    <div class="hero" style="background:linear-gradient(135deg,#0891b2,#4f46e5)">
+      <div class="kicker">Подготовка к собеседованию · SQL / PostgreSQL</div>
+      <h1>Тормозит критический эндпоинт: сложный SQL из Oracle</h1>
+      <p>Пошаговый разбор: как найти проблему, что смотреть в <code>EXPLAIN (ANALYZE, BUFFERS)</code>
+         и когда Hash / Merge / Nested Loop становятся узким местом.</p>
+      <div class="meta">Алексей Грознов · курсы QPT-PostgreSQL, DBA2, DBA3 (PostgresPro)</div>
+    </div>
+    <section id="q3">
+      <h2>Вопрос 3. План действий по шагам</h2>
+      <p>Принцип: <strong>сначала измерить и локализовать, потом менять</strong>. Никогда не «оптимизировать
+        наугад» — тем более запрос, перенесённый из Oracle, где его план был другим.</p>
+      <ol>
+        <li><strong>Убедиться, что тормозит именно SQL.</strong> Смотрим, где уходит время эндпоинта:
+          приложение, сеть, сериализация или БД. По базе — <code>pg_stat_statements</code> (наибольшие
+          <code>total_exec_time</code> / <code>mean_exec_time</code>), логи (<code>log_min_duration_statement</code>),
+          трейсы APM.</li>
+        <li><strong>Снять реальный план.</strong> <code>EXPLAIN (ANALYZE, BUFFERS)</code> на
+          <strong>реальных</strong> параметрах: план зависит от значений. <code>ANALYZE</code> реально
+          <em>выполняет</em> запрос — на проде осторожно (реплика или транзакция с <code>ROLLBACK</code>).</li>
+        <li><strong>Найти дорогой узел.</strong> В дереве плана — узлы с наибольшим
+          <code>actual time × loops</code>. Часто один-два узла «съедают» почти всё время.</li>
+        <li><strong>Понять причину.</strong> Обычно: устаревшая статистика (плохая оценка кардинальности),
+          отсутствие индекса, <code>Seq Scan</code> на большой таблице, функция/приведение над колонкой в
+          <code>WHERE</code>, мало памяти под сортировку/хеш, bloat, неудачный тип соединения.</li>
+        <li><strong>Исправить и перепроверить.</strong> Индекс, статистика, переписанный запрос, настройки —
+          и снова план. Сравнить «до/после» по плану <em>и</em> по реальной нагрузке.</li>
+        <li><strong>Проверить эффект в приложении.</strong> Что упала задержка эндпоинта (p95/p99), а не только
+          «время запроса в консоли».</li>
+      </ol>
+
+      <div class="codewrap">
+        <p class="cap">Как найти «виновника» среди запросов</p>
+        <pre><code class="language-sql">SELECT query, calls, mean_exec_time, total_exec_time
+FROM   pg_stat_statements
+ORDER  BY total_exec_time DESC
+LIMIT  20;</code></pre>
+      </div>
+
+      <div class="box note">
+        <span class="t">Отдельная проблема миграции из Oracle</span>
+        <p>В перенесённом запросе часто осталась «оракловская» логика: <code>(+)</code>, <code>ROWNUM</code>,
+          <code>NVL</code>/<code>DECODE</code>, неявные преобразования типов, hints. В PostgreSQL подсказок
+          нет, а неявные преобразования убивают использование индексов.</p>
+      </div>
+    </section>
+
+    <section id="q3-explain">
+      <h2>Что искать в EXPLAIN (ANALYZE, BUFFERS)</h2>
+      <p>План — дерево узлов: у каждого есть <strong>оценка</strong> планировщика и, при <code>ANALYZE</code>,
+        — <strong>факт</strong>. Смысл в сравнении этих чисел.</p>
+
+      <div class="codewrap">
+        <p class="cap">Пример вывода (фрагмент)</p>
+        <pre><code class="language-sql">Hash Join  (cost=1120.5..9430.1 rows=50 width=40)
+           (actual time=8.311..402.774 rows=50 loops=1)
+  Buffers: shared hit=20114 read=5832
+  -&gt;  Seq Scan on orders o  (cost=0.00..8000.0 rows=5000 width=24)
+                             (actual time=0.02..380.9 rows=480000 loops=1)
+        Filter: (status = 'NEW'::text)
+        Rows Removed by Filter: 4520000
+  -&gt;  Hash  (actual time=8.1..8.1 rows=200 loops=1)
+        Buckets: 1024  Batches: 4  Memory Usage: 1024kB
+Sort Method: external merge  Disk: 25120kB
+Planning Time: 1.204 ms
+Execution Time: 405.771 ms</code></pre>
+      </div>
+
+      <p>Здесь сразу три «красных флага»: <code>Seq Scan</code> с огромным <code>Rows Removed by Filter</code>,
+        <code>Batches: 4</code> у Hash (не хватило памяти) и сортировка на диск
+        (<code>external merge Disk</code>).</p>
+
+      <table>
+        <thead><tr><th>Поле</th><th>Что означает и на что смотреть</th></tr></thead>
+        <tbody>
+          <tr><td><code>cost=.. rows=..</code></td><td>Оценка планировщика: стоимость и число строк</td></tr>
+          <tr><td><code>actual time=.. rows=.. loops=..</code></td><td>Факт. Общее время узла ≈ <code>actual time × loops</code></td></tr>
+          <tr><td><code>rows</code> vs <code>actual rows</code></td><td><strong>Главный сигнал.</strong> Расхождение в разы → плохая статистика → неверный план</td></tr>
+          <tr><td><code>loops</code></td><td>Сколько раз выполнялся узел; большое значение у Nested Loop = неявный цикл</td></tr>
+          <tr><td><code>Buffers: hit / read</code></td><td><code>hit</code> — из кэша, <code>read</code> — с диска</td></tr>
+          <tr><td><code>Rows Removed by Filter</code></td><td>Столько строк прочитали и выбросили → нужен индекс</td></tr>
+          <tr><td><code>Sort Method</code></td><td><code>Memory</code> — хорошо; <code>external merge Disk</code> — мало <code>work_mem</code></td></tr>
+          <tr><td><code>Hash: Batches</code></td><td><code>1</code> — в памяти; больше 1 → hash на диск</td></tr>
+          <tr><td><code>Planning</code> / <code>Execution Time</code></td><td>Построение плана против выполнения</td></tr>
+        </tbody>
+      </table>
+
+      <div class="box gold">
+        <span class="t">★ Чек-лист «красных флагов»</span>
+        <ul>
+          <li><strong>Seq Scan</strong> на большой таблице там, где ожидался Index Scan.</li>
+          <li><strong>Nested Loop</strong> с большим числом <code>loops</code>.</li>
+          <li><strong>Оценка строк расходится</strong> с фактом (в разы/порядки).</li>
+          <li><strong>Sort / Hash на диск</strong> (<code>external merge</code>, <code>Batches &gt; 1</code>).</li>
+          <li><strong>Много <code>shared read</code></strong> — данные не в кэше.</li>
+          <li><strong>Огромный <code>Rows Removed by Filter</code></strong>.</li>
+        </ul>
+      </div>
+    </section>
+    <section id="q3-joins">
+      <h2>Типы соединений: когда они становятся узким местом</h2>
+      <p>Способ соединения не «плохой» сам по себе — плохим его делает несоответствие данным. Планировщик
+        выбирает его по <strong>оценке кардинальности</strong>; ошиблась оценка — ошибётся и выбор.</p>
+
+      <h3>Nested Loop</h3>
+      <ul>
+        <li><strong>Хорош:</strong> внешних строк мало, внутренний поиск по индексу.</li>
+        <li><strong>Плох:</strong> внешних строк много → тысячи циклов, сложность O(N×M).</li>
+        <li><strong>Сигнал:</strong> большое <code>loops</code>; <code>rows</code> на внешнем узле в разы меньше
+          <code>actual rows</code>.</li>
+      </ul>
+
+      <h3>Hash Join</h3>
+      <ul>
+        <li><strong>Хорош:</strong> большие наборы, соединение по равенству.</li>
+        <li><strong>Плох:</strong> хеш не влезает в <code>work_mem</code> → батчи на диск.</li>
+        <li><strong>Сигнал:</strong> <code>Batches</code> больше 1, рост <code>Memory Usage</code> /
+          <code>temp written</code>.</li>
+      </ul>
+
+      <h3>Merge Join</h3>
+      <ul>
+        <li><strong>Хорош:</strong> обе стороны уже отсортированы (индексами).</li>
+        <li><strong>Плох:</strong> нужна дорогая сортировка больших наборов (уходит на диск).</li>
+        <li><strong>Сигнал:</strong> узлы <code>Sort</code> с <code>external merge Disk</code> перед
+          <code>Merge Join</code>.</li>
+      </ul>
+
+      <table>
+        <thead><tr><th>Тип</th><th>Подходит</th><th>Проблема</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Nested Loop</strong></td><td>Мало внешних строк + индекс внутри</td><td>Много строк → O(N×M)</td></tr>
+          <tr><td><strong>Hash Join</strong></td><td>Большие наборы по равенству</td><td>Не хватило памяти → диск</td></tr>
+          <tr><td><strong>Merge Join</strong></td><td>Обе стороны отсортированы</td><td>Дорогая сортировка</td></tr>
+        </tbody>
+      </table>
+
+      <div class="box gold">
+        <span class="t">★ Ключевая мысль</span>
+        <p>«Плохой» — не тип соединения, а <strong>неверная оценка кардинальности</strong>. Если планировщик
+          думает, что строк 10, он выберет Nested Loop; если на деле их 500 000 — это катастрофа. Поэтому
+          сначала сравнивают <code>rows</code> и <code>actual rows</code>, и только потом — соединения.</p>
+      </div>
+    </section>
+
+    <section id="q3-fix">
+      <h2>Что делать дальше (по типовым причинам)</h2>
+      <table>
+        <thead><tr><th>Что нашли</th><th>Что делаем</th></tr></thead>
+        <tbody>
+          <tr><td>Плохая оценка строк</td><td><code>ANALYZE</code>; поднять <code>default_statistics_target</code>; <code>CREATE STATISTICS</code></td></tr>
+          <tr><td><code>Seq Scan</code> на большой таблице</td><td>Индекс: составной, частичный, покрывающий (<code>INCLUDE</code>)</td></tr>
+          <tr><td>Функция/приведение над колонкой в <code>WHERE</code></td><td>Убрать (или сделать <em>функциональный</em> индекс)</td></tr>
+          <tr><td>Sort / Hash на диск</td><td>Поднять <code>work_mem</code> (аккуратно); упростить сортировку</td></tr>
+          <tr><td>Дорогой <code>OFFSET</code></td><td>Keyset-пагинация вместо больших смещений</td></tr>
+          <tr><td>Очень большая таблица</td><td>Партиционирование; материализованные представления под агрегаты</td></tr>
+          <tr><td>Много I/O (<code>shared read</code>)</td><td>Уменьшить объём чтения; проверить кэш и объём данных</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Настройки, которые реально влияют</h3>
+      <ul>
+        <li><code>work_mem</code> — память на сортировки и хеши (умножается на число операций).</li>
+        <li><code>random_page_cost</code> — для SSD ниже (≈1.1), иначе индексы недооцениваются.</li>
+        <li><code>effective_cache_size</code> — «сколько данных примерно в кэше».</li>
+        <li><code>enable_seqscan</code> и т. п. — <strong>только для диагностики</strong>.</li>
+      </ul>
+
+      <div class="box warn">
+        <span class="t">Чего в PostgreSQL нет</span>
+        <p>Подсказок планировщику (как <code>/*+ INDEX(...) */</code> в Oracle). Есть
+          <code>pg_hint_plan</code>, но правильнее починить статистику и индексы, а не «заставлять» план.</p>
+      </div>
+
+      <h3>Готовый ответ (сжато)</h3>
+      <div class="qa">
+        <p>«Сначала локализую: время уходит в приложении или в БД (<code>pg_stat_statements</code>, логи,
+          трейсы). Затем снимаю <code>EXPLAIN (ANALYZE, BUFFERS)</code> на реальных параметрах. Узкое место
+          ищу по <code>actual time × loops</code> и смотрю три вещи: расхождение <code>rows</code> и
+          <code>actual rows</code> (плохая статистика → неверный план), тип сканирования (<code>Seq Scan</code>
+          там, где нужен индекс) и работу с памятью (сортировки/hash на диск). По соединениям: Nested Loop
+          плох при большом числе циклов, Hash — при нехватке <code>work_mem</code>, Merge — при дорогой
+          сортировке; но корень обычно в оценке кардинальности. Дальше правлю причину: статистика, индексы,
+          переписывание запроса (<code>ROWNUM</code> → <code>LIMIT</code>, переписать <code>(+)</code>-джойны),
+          при необходимости <code>work_mem</code> и партиционирование. И обязательно замеряю «до/после» на
+          реальной нагрузке».</p>
+      </div>
+    </section>
+  </article>
+  </main>
+</div>
+<script>if (window.hljs) hljs.highlightAll();</script>
+</body>
+</html>

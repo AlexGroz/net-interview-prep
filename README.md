@@ -4,6 +4,8 @@
 
 - **[Вопрос 1 — Высокая пропускная способность и низкая задержка в .NET](q1-high-load.html)**
 - **[Вопрос 2 — Миграция DI и жизненных циклов: .NET Framework → .NET Core](q2-di-lifetimes.html)**
+- **[Вопрос 3 — Оптимизация SQL в PostgreSQL](q3-sql-explain.html)**
+- **[Вопрос 4 — Миграция Oracle → PostgreSQL](q4-oracle-to-postgres.html)**
 
 Ниже — те же материалы в формате Markdown.
 
@@ -328,3 +330,98 @@ builder.Host.UseDefaultServiceProvider(o => { o.ValidateScopes = true; o.Validat
 - Ассоциации: `HttpContext.Current` → `IHttpContextAccessor`; `InstancePerRequest` → `Scoped`; `Web.config` → `IOptions*`.
 
 
+
+---
+
+# Вопрос 3. Оптимизация SQL в PostgreSQL
+
+## Шаги диагностики
+
+1. **Локализовать** — время в приложении или в БД (`pg_stat_statements`, логи, трейсы).
+2. **Снять реальный план** — `EXPLAIN (ANALYZE, BUFFERS)` на реальных параметрах (на проде — реплика/`ROLLBACK`).
+3. **Найти дорогой узел** — по `actual time × loops`.
+4. **Понять причину** — статистика, нет индекса, `Seq Scan`, функция над колонкой, мало `work_mem`, bloat, соединение.
+5. **Исправить и перепроверить** — «до/после».
+6. **Проверить эффект в приложении** — p95/p99.
+
+## Что искать в EXPLAIN (ANALYZE, BUFFERS)
+
+| Поле | Что означает |
+|---|---|
+| `cost` / `rows` | оценка планировщика |
+| `actual time` / `rows` / `loops` | факт; total ≈ `actual time × loops` |
+| `rows` vs `actual rows` | главный сигнал: расхождение → плохая статистика |
+| `Buffers: hit / read` | из кэша / с диска |
+| `Rows Removed by Filter` | читаем лишнее |
+| `Sort Method` | `Memory` ок; `external merge Disk` — мало `work_mem` |
+| `Hash: Batches` | больше 1 → hash на диск |
+
+**Красные флаги:** `Seq Scan` на большой таблице; `Nested Loop` с большим `loops`; расхождение `rows`;
+`Sort`/`Hash` на диск; много `shared read`; огромный `Rows Removed by Filter`.
+
+## Типы соединений
+
+- **Nested Loop** — хорош при малом числе внешних строк и индексе внутри; плох при большом `loops` (O(N×M)).
+- **Hash Join** — хорош для больших наборов по равенству; плох, когда хеш не влезает в `work_mem` (батчи на диск).
+- **Merge Join** — хорош, когда обе стороны отсортированы; плох, когда нужна дорогая сортировка.
+- Корень проблем — **неверная оценка кардинальности**.
+
+## Что делать
+
+`ANALYZE` / `default_statistics_target` / `CREATE STATISTICS` · индексы (составной, частичный, покрывающий,
+функциональный) · убрать функции над колонками · `work_mem` · keyset-пагинация · партиционирование ·
+`random_page_cost` под SSD. Подсказок планировщику в PostgreSQL нет.
+
+## Готовый ответ (сжато)
+
+«Локализую (`pg_stat_statements`, логи). Снимаю `EXPLAIN (ANALYZE, BUFFERS)`. Ищу узкое место по
+`actual time × loops` и смотрю: расхождение `rows` и `actual rows`, тип сканирования, работу с памятью.
+По соединениям: Nested Loop плох при большом числе циклов, Hash — при нехватке `work_mem`, Merge — при
+дорогой сортировке; корень — в оценке кардинальности. Правлю причину (статистика, индексы, переписывание:
+`ROWNUM`→`LIMIT`, `(+)`→ANSI) и замеряю «до/после»».
+
+---
+
+# Вопрос 4. Миграция Oracle → PostgreSQL
+
+## MVCC
+
+| Аспект | Oracle | PostgreSQL |
+|---|---|---|
+| Где прошлые версии | undo-сегменты | в самих таблицах (страницы) |
+| Снимок по | SCN | метки `xmin`/`xmax` |
+| Очистка | undo, автоматически | `VACUUM` / `autovacuum` |
+| Долгий запрос | `ORA-01555` | портит горизонт vacuum |
+
+Общее: читатели не блокируют писателей, писатели — читателей. Специфика PG: **bloat**, важность `autovacuum`.
+
+## Блокировки
+
+- Чтение не блокируется записью (в обеих).
+- Запись — блокировка строки, второй писатель ждёт.
+- В PG DDL конфликтует с чтениями (`ACCESS EXCLUSIVE`) → `CREATE INDEX CONCURRENTLY`; DDL транзакционный
+  (в Oracle — авто-коммит).
+- `deadlock` / `40001` → **retry**.
+
+## Конвертация фич Oracle
+
+- **`''` vs NULL:** в Oracle `''` = NULL; в PG `''` ≠ NULL (ломает `IS NULL`, `NOT NULL`, уникальность, конкатенацию).
+- **PACKAGE:** нет аналога → схема как пространство имён; состояние сессии — temp-таблицы/`set_config` (или убирали).
+- **`PRAGMA AUTONOMOUS_TRANSACTION`:** нет прямого аналога → `dblink` (отдельное соединение) или вынос логов из транзакции.
+- **Типы:** `NUMBER`→`int`/`bigint`/`numeric`; `VARCHAR2`→`varchar`/`text`; **`DATE` в Oracle содержит время** → `timestamp`;
+  `CLOB`/`BLOB`→`text`/`bytea`; `ROWID`→`ctid` (нестабилен).
+- **Синтаксис:** `NVL`→`COALESCE`, `DECODE`→`CASE`, `ROWNUM`→`LIMIT`, `(+)`→ANSI JOIN, `CONNECT BY`→`WITH RECURSIVE`,
+  `DUAL`, `seq.NEXTVAL`→`nextval()`, `MERGE`→`ON CONFLICT`; регистр идентификаторов; порядок NULL.
+
+## План миграции
+
+Инвентаризация → маппинг типов → конвертация PL/SQL → миграция данных (`setval`, сверки) →
+**тесты эквивалентности** → сравнение производительности → настройка PG (`autovacuum`, `work_mem`, статистика) →
+поэтапное переключение с откатом.
+
+## Готовый ответ (сжато)
+
+«MVCC в обеих даёт непересечение чтения и записи; различие — где прошлые версии. В Oracle — undo/SCN,
+в PG — `xmin`/`xmax` в страницах, их убирает `VACUUM` (отсюда bloat и важность `autovacuum`). Блокировки:
+строка при записи, чтение никого не блокирует; DDL в PG конфликтует с чтениями. Труднее всего: `''` ≠ NULL,
+нет PACKAGE и автономных транзакций, `DATE` содержит время. Плюс массовая замена `NVL`/`DECODE`/`ROWNUM`/`(+)`/`CONNECT BY`».

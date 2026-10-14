@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вопрос 4 · Миграция Oracle → PostgreSQL</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css">
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/sql.min.js"></script>
+<style>
+  :root{
+    --bg:#f7f8fb; --ink:#1c2230; --muted:#5a6478; --line:#e3e7f0;
+    --brand:#4f46e5; --tip:#0f9d58; --warn:#d97706; --gold:#b45309; --note:#2563eb;
+    --code-bg:#0d1117; --shadow:0 10px 30px rgba(20,28,60,.08);
+    --mono:"JetBrains Mono","Fira Code",ui-monospace,Menlo,Consolas,monospace;
+    --sans:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.7;-webkit-font-smoothing:antialiased}
+  .layout{display:grid;grid-template-columns:280px minmax(0,1fr);max-width:1280px;margin:0 auto}
+  aside{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:28px 20px 60px;border-right:1px solid var(--line);background:linear-gradient(180deg,#fff,#f4f6fc)}
+  aside .brandsmall{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--brand);font-weight:700}
+  aside h2{font-size:16px;margin:6px 0 18px;line-height:1.35}
+  aside nav a{display:block;color:var(--muted);text-decoration:none;font-size:14.5px;padding:7px 12px;border-radius:9px;transition:.15s}
+  aside nav a:hover{background:#eef1fa;color:var(--ink)}
+  main{padding:44px 54px 110px}
+  article{max-width:860px;margin:0 auto}
+  .hero{background:linear-gradient(135deg,#4f46e5,#0ea5e9);color:#fff;border-radius:14px;padding:36px 40px;box-shadow:var(--shadow);margin-bottom:36px}
+  .hero .kicker{font-size:12.5px;text-transform:uppercase;letter-spacing:.16em;opacity:.9;font-weight:700}
+  .hero h1{font-size:30px;line-height:1.2;margin:12px 0;font-weight:800}
+  .hero p{margin:0;font-size:17px;opacity:.96;max-width:60ch}
+  .hero .meta{margin-top:18px;font-size:13.5px;opacity:.9;border-top:1px solid rgba(255,255,255,.3);padding-top:12px}
+  .topnav{margin:0 0 18px;font-size:14.5px;color:var(--muted)}
+  .topnav a{text-decoration:none;font-weight:600}
+  .topnav span{margin:0 9px;color:#c3cad9}
+  h2{font-size:25px;margin:52px 0 14px;padding-bottom:10px;border-bottom:2px solid var(--line)}
+  h3{font-size:19px;margin:30px 0 8px}
+  p{margin:12px 0}
+  ul,ol{margin:12px 0;padding-left:24px}
+  li{margin:6px 0}
+  strong{color:#111726}
+  code{font-family:var(--mono);font-size:.9em;background:#eef1f8;color:#b4007a;padding:2px 6px;border-radius:6px;border:1px solid #e0e5f2}
+  pre{background:var(--code-bg);border-radius:12px;padding:18px 20px;overflow:auto;box-shadow:var(--shadow);border:1px solid #1b2434;margin:16px 0}
+  pre code{background:none;color:#e6edf3;border:none;padding:0;font-size:14px;line-height:1.6}
+  .codewrap{margin:16px 0}
+  .codewrap .cap{font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:600}
+  .box{border-radius:12px;padding:15px 20px;margin:18px 0;border-left:5px solid;background:#fff;box-shadow:var(--shadow)}
+  .box .t{font-weight:800;font-size:13.5px;letter-spacing:.03em;text-transform:uppercase;margin-bottom:5px;display:block}
+  .box p:first-of-type{margin-top:0}.box p:last-child{margin-bottom:0}
+  .tip{border-color:var(--tip)} .tip .t{color:var(--tip)}
+  .warn{border-color:var(--warn)} .warn .t{color:var(--warn)}
+  .gold{border-color:var(--gold);background:linear-gradient(180deg,#fffdf5,#fff)} .gold .t{color:var(--gold)}
+  .note{border-color:var(--note)} .note .t{color:var(--note)}
+  .danger{border-color:#dc2626} .danger .t{color:#dc2626}
+  table{border-collapse:collapse;width:100%;margin:18px 0;font-size:15px;background:#fff;box-shadow:var(--shadow);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#eef1fa;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:#38405a}
+  tr:last-child td{border-bottom:none}
+  .qa{border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);padding:4px 22px;margin:18px 0}
+  .qa .q{font-weight:800;color:var(--brand)}
+  footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+  @media(max-width:960px){
+    .layout{grid-template-columns:1fr}
+    aside{position:static;height:auto;border-right:none;border-bottom:1px solid var(--line)}
+    main{padding:24px 16px 70px}
+    .hero{padding:26px 22px}.hero h1{font-size:24px}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <div class="brandsmall">SQL · PostgreSQL</div>
+    <h2>Вопрос 4. Миграция Oracle → PostgreSQL</h2>
+    <nav>
+      <a href="index.html">← Все вопросы</a>
+      <a href="#q4">MVCC: Oracle vs PostgreSQL</a>
+      <a href="#q4-locks">Блокировки при чтении/записи</a>
+      <a href="#q4-convert">Конвертация фич Oracle</a>
+      <a href="#q4-funcs">Функции и синтаксис</a>
+      <a href="#q4-steps">План миграции</a>
+    </nav>
+  </aside>
+  <main>
+  <article>
+    <div class="topnav">
+      <a href="index.html">← Все вопросы</a><span>·</span><a href="q3-sql-explain.html">Вопрос 3: SQL</a><span>·</span><strong>Вопрос 4: миграция Oracle → PostgreSQL</strong>
+    </div>
+    <div class="hero" style="background:linear-gradient(135deg,#b45309,#be185d)">
+      <div class="kicker">Подготовка к собеседованию · Миграция данных</div>
+      <h1>Oracle → PostgreSQL: MVCC, блокировки и конвертация PL/SQL</h1>
+      <p>Чем отличаются механизмы согласованности в двух СУБД, как ведут себя блокировки при чтении и записи
+         и что делать с фичами Oracle без прямого аналога.</p>
+      <div class="meta">Алексей Грознов · миграция корпоративных БД Oracle → PostgreSQL (DBA2, DBA3, QPT)</div>
+    </div>
+    <section id="q4">
+      <h2>Вопрос 4. MVCC: Oracle и PostgreSQL</h2>
+      <p><strong>Идея MVCC</strong> в обеих СУБД одна: <em>читатель видит согласованный снимок данных и не
+        блокирует писателя, а писатель не блокирует читателя</em>. Различие — в том, <strong>где хранятся
+        старые версии строк</strong>, и это меняет поведение системы.</p>
+
+      <h3>Oracle</h3>
+      <ul>
+        <li>MVCC реализован через <strong>undo</strong>: актуальные данные — в таблицах, прошлые версии —
+          в undo-табличном пространстве.</li>
+        <li>Читатель получает снимок по <strong>SCN</strong> (system change number).</li>
+        <li>Если undo «перезаписался», долгий запрос может получить
+          <code>ORA-01555: snapshot too old</code>.</li>
+      </ul>
+
+      <h3>PostgreSQL</h3>
+      <ul>
+        <li>MVCC реализован <strong>в самих страницах таблицы</strong>: у каждой версии строки есть метки
+          видимости (<code>xmin</code>/<code>xmax</code>).</li>
+        <li>При <code>UPDATE</code> создаётся <strong>новая версия строки</strong>, старая остаётся, пока её
+          не уберёт <code>VACUUM</code>.</li>
+        <li>Обратная сторона: <strong>bloat</strong> (раздувание) и важность <code>autovacuum</code>;
+          долгие транзакции <strong>мешают очистке</strong>.</li>
+      </ul>
+
+      <table>
+        <thead><tr><th>Аспект</th><th>Oracle</th><th>PostgreSQL</th></tr></thead>
+        <tbody>
+          <tr><td>Где прошлые версии</td><td>В undo-сегментах</td><td>В самих таблицах (в страницах)</td></tr>
+          <tr><td>Снимок по</td><td>SCN</td><td>Метки видимости <code>xmin</code>/<code>xmax</code></td></tr>
+          <tr><td>Очистка версий</td><td>Автоматически, undo-пространство</td><td><code>VACUUM</code> / <code>autovacuum</code></td></tr>
+          <tr><td>Раздувание таблиц</td><td>Меньшая проблема</td><td>Реальная проблема (bloat)</td></tr>
+          <tr><td>Опасность долгого запроса</td><td><code>ORA-01555</code></td><td>Портит горизонт vacuum</td></tr>
+        </tbody>
+      </table>
+
+      <div class="box note">
+        <span class="t">Что важно на практике</span>
+        <p>После перехода на PostgreSQL нужно <strong>настроить autovacuum</strong>, <strong>не держать длинные
+          транзакции</strong> и <strong>следить за bloat</strong>: интенсивные <code>UPDATE</code>/<code>DELETE</code>
+          плодят версии, и без очистки таблицы и индексы «толстеют».</p>
+      </div>
+    </section>
+
+    <section id="q4-locks">
+      <h2>Блокировки при чтении и записи</h2>
+
+      <h3>Чтение</h3>
+      <ul>
+        <li>В обеих СУБД <code>SELECT</code> <strong>не блокируется</strong> чужими изменениями.</li>
+        <li>В PostgreSQL <code>SELECT</code> берёт <code>ACCESS SHARE</code>, который <strong>конфликтует с
+          DDL</strong>: <code>ALTER TABLE</code> / <code>TRUNCATE</code> берут <code>ACCESS EXCLUSIVE</code>.</li>
+        <li>В Oracle <strong>DDL авто-коммитится</strong>; в PostgreSQL DDL транзакционный.</li>
+      </ul>
+
+      <h3>Запись</h3>
+      <ul>
+        <li>Блокировка <strong>на уровне строки</strong>; второй писатель той же строки <em>ждёт</em>.</li>
+        <li>Читатели строку не блокируют — видят прежнюю версию.</li>
+        <li>Есть <code>SELECT ... FOR UPDATE</code>; <strong>deadlock</strong> обе системы обнаруживают —
+          отменённую транзакцию нужно <strong>повторить (retry)</strong>.</li>
+      </ul>
+
+      <table>
+        <thead><tr><th>Уровень</th><th>Oracle</th><th>PostgreSQL</th></tr></thead>
+        <tbody>
+          <tr><td>Чтение vs запись</td><td>Не блокируют друг друга</td><td>Не блокируют друг друга</td></tr>
+          <tr><td>Запись vs запись</td><td>Блокировка строки, второй ждёт</td><td>Блокировка строки, второй ждёт</td></tr>
+          <tr><td>Чтение vs DDL</td><td>DDL блокирует и авто-коммитит</td><td>DDL конфликтует с <code>ACCESS SHARE</code></td></tr>
+          <tr><td>Создание индекса</td><td>Опция <code>ONLINE</code></td><td><code>CREATE INDEX CONCURRENTLY</code></td></tr>
+        </tbody>
+      </table>
+
+      <div class="box warn">
+        <span class="t">Что «блокирует» таблицу в PostgreSQL</span>
+        <p><code>ALTER TABLE</code>, <code>TRUNCATE</code>, <code>VACUUM FULL</code>, <code>CREATE INDEX</code>
+          (без <code>CONCURRENTLY</code>), <code>CLUSTER</code>. Поэтому в продакшене — короткие транзакции и
+          <code>CREATE INDEX CONCURRENTLY</code>.</p>
+      </div>
+
+      <h3>Уровни изоляции</h3>
+      <ul>
+        <li>По умолчанию в обеих — <strong>READ COMMITTED</strong>.</li>
+        <li>Oracle <code>SERIALIZABLE</code> = snapshot isolation; PostgreSQL <code>SERIALIZABLE</code> строже (SSI).</li>
+        <li><code>40001 (serialization failure)</code> и deadlock в PostgreSQL — норма: критичные транзакции
+          оборачивают в retry.</li>
+      </ul>
+    </section>
+    <section id="q4-convert">
+      <h2>Конвертация специфичных фич Oracle</h2>
+
+      <h3>1. NULL и пустая строка — самое известное различие</h3>
+      <p>В Oracle <strong>пустая строка <code>''</code> и NULL — это одно и то же</strong>. В PostgreSQL
+        <code>''</code> — <strong>обычная пустая строка</strong>. Это ломает логику:</p>
+      <ul>
+        <li>проверки <code>IS NULL</code> не срабатывают для пустых строк;</li>
+        <li><code>NOT NULL</code> в PostgreSQL <strong>пропустит</strong> пустую строку (в Oracle — нет);</li>
+        <li>уникальность: в Oracle <code>''</code> = NULL, а NULL-ы в уникальном индексе допустимы; в PostgreSQL
+          NULL-ы по умолчанию <em>различны</em> (меняется через <code>NULLS NOT DISTINCT</code>, PG15+);</li>
+        <li>конкатенация: <code>NULL || 'x'</code> в Oracle даёт <code>'x'</code>, в PostgreSQL — NULL.</li>
+      </ul>
+      <div class="box warn">
+        <span class="t">Что делали</span>
+        <p>Приводили данные при миграции (пустые строки → NULL там, где так было в Oracle), добавляли
+          <code>CHECK (col &lt;&gt; '')</code> или <code>NULLIF(col,'')</code> и переписывали проверки в коде.
+          Ошибки тут «тихие» — проявляются не сразу, поэтому это ловят тестами эквивалентности.</p>
+      </div>
+
+      <h3>2. PACKAGE — прямого аналога нет</h3>
+      <p>Пакет в Oracle — это группа процедур/функций плюс состояние сессии (package variables). В PostgreSQL
+        <strong>пакетов нет</strong>. Варианты:</p>
+      <ul>
+        <li><strong>Схема как пространство имён</strong> — функции группировали в схему
+          (<code>pkg_orders.calculate_total(...)</code>).</li>
+        <li><strong>Префиксы в именах</strong> функций/процедур.</li>
+        <li><strong>Состояние сессии</strong> эмулировали через временные таблицы или <code>set_config</code>/GUC —
+          либо (правильнее) убирали глобальное состояние.</li>
+        <li>В <strong>PostgreSQL 11+</strong> есть настоящие процедуры (<code>CREATE PROCEDURE</code>) с
+          управлением транзакциями.</li>
+      </ul>
+
+      <h3>3. PRAGMA AUTONOMOUS_TRANSACTION</h3>
+      <p>Нужна, когда операция (аудит/лог) должна <strong>зафиксироваться независимо</strong> от основной
+        транзакции — даже если основная откатится. В PostgreSQL функции так транзакциями не управляют.</p>
+      <ul>
+        <li><strong>Обходной путь:</strong> отдельное соединение — расширение <code>dblink</code> (или background
+          worker): своя сессия, значит своя транзакция.</li>
+        <li><strong>Архитектурно лучше:</strong> вынести аудит/логирование из транзакции — писать события в
+          очередь (таблица-очередь + фоновый воркер) или в отдельную лог-систему.</li>
+        <li>Честная формулировка: «точного аналога нет; где-то использовали <code>dblink</code>, где-то меняли
+          архитектуру, чтобы лог не зависел от основной транзакции».</li>
+      </ul>
+      <h3>4. Типы данных</h3>
+      <table>
+        <thead><tr><th>Oracle</th><th>PostgreSQL</th><th>Подводный камень</th></tr></thead>
+        <tbody>
+          <tr><td><code>NUMBER</code></td><td><code>int</code> / <code>bigint</code> / <code>numeric</code></td><td>Выбор зависит от точности и диапазона</td></tr>
+          <tr><td><code>VARCHAR2</code></td><td><code>varchar</code> / <code>text</code></td><td>В PostgreSQL <code>text</code> без потери производительности</td></tr>
+          <tr><td><code>DATE</code></td><td><code>timestamp</code> / <code>timestamptz</code></td><td><strong>Ловушка:</strong> в Oracle <code>DATE</code> хранит и дату, и время; в PostgreSQL <code>date</code> — только дату</td></tr>
+          <tr><td><code>CLOB</code> / <code>BLOB</code></td><td><code>text</code> / <code>bytea</code></td><td>Большие объекты работают иначе</td></tr>
+          <tr><td><code>ROWID</code></td><td><code>ctid</code></td><td><code>ctid</code> <strong>не стабилен</strong> (меняется при UPDATE/vacuum)</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="q4-funcs">
+      <h2>Функции и синтаксис: что переписывали</h2>
+      <table>
+        <thead><tr><th>Oracle</th><th>PostgreSQL</th><th>Комментарий</th></tr></thead>
+        <tbody>
+          <tr><td><code>NVL(a,b)</code></td><td><code>COALESCE(a,b)</code></td><td>Прямая замена</td></tr>
+          <tr><td><code>NVL2</code> / <code>DECODE</code></td><td><code>CASE WHEN ... THEN ... END</code></td><td>Переписывали на <code>CASE</code></td></tr>
+          <tr><td><code>SYSDATE</code> / <code>SYSTIMESTAMP</code></td><td><code>CURRENT_TIMESTAMP</code> / <code>now()</code></td><td>Различия семантики времени</td></tr>
+          <tr><td><code>ROWNUM</code></td><td><code>LIMIT</code> / <code>ROW_NUMBER()</code></td><td><code>ROWNUM</code> работает до сортировки — частый источник ошибок</td></tr>
+          <tr><td><code>(+)</code></td><td><code>LEFT JOIN</code> / <code>RIGHT JOIN</code></td><td>Переписывали на ANSI-синтаксис</td></tr>
+          <tr><td><code>CONNECT BY</code></td><td><code>WITH RECURSIVE</code></td><td>Иерархические запросы</td></tr>
+          <tr><td><code>FROM DUAL</code></td><td><code>SELECT ...</code> без <code>FROM</code></td><td><code>DUAL</code> не нужен</td></tr>
+          <tr><td><code>seq.NEXTVAL</code> / <code>CURRVAL</code></td><td><code>nextval()</code> / <code>currval()</code></td><td>Или <code>GENERATED ... AS IDENTITY</code></td></tr>
+          <tr><td><code>MERGE</code></td><td><code>MERGE</code> (PG15+) / <code>INSERT ... ON CONFLICT</code></td><td>Ранее MERGE не было</td></tr>
+          <tr><td><code>SUBSTR</code> / <code>INSTR</code></td><td><code>substring</code> / <code>position</code>, <code>strpos</code></td><td>Отрицательные индексы работают иначе</td></tr>
+          <tr><td><code>TO_DATE</code> / <code>TO_CHAR</code></td><td><code>to_date</code> / <code>to_char</code></td><td>Не все маски совпадают (<code>RRRR</code>, <code>MON</code>)</td></tr>
+          <tr><td>Триггеры <code>:NEW</code> / <code>:OLD</code></td><td><code>NEW</code> / <code>OLD</code></td><td>Без двоеточия</td></tr>
+          <tr><td><code>DBMS_*</code></td><td>Функции <code>pg_*</code>, расширения</td><td>Прямых аналогов часто нет</td></tr>
+          <tr><td>Подсказки (hints)</td><td>—</td><td>Отсутствуют (в лучшем случае <code>pg_hint_plan</code>)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Ещё несколько «коварных» мест</h3>
+      <ul>
+        <li><strong>Регистр идентификаторов:</strong> Oracle хранит имена в верхнем регистре, PostgreSQL — в
+          нижнем; код с кавычками может «не найти» объект.</li>
+        <li><strong>Порядок NULL при сортировке:</strong> лучше указывать <code>NULLS LAST/FIRST</code> явно.</li>
+        <li><strong>Автокоммит DDL:</strong> в Oracle DDL фиксируется сам, в PostgreSQL — часть транзакции.</li>
+        <li><strong>Неявные преобразования:</strong> в PostgreSQL строже — часть «магии» Oracle просто не
+          скомпилируется (что скорее хорошо: ошибки видны сразу).</li>
+      </ul>
+    </section>
+    <section id="q4-steps">
+      <h2>План миграции (как делали по шагам)</h2>
+      <ol>
+        <li><strong>Инвентаризация.</strong> Переписать все объекты БД: таблицы, представления, индексы,
+          последовательности, триггеры, пакеты/процедуры/функции, задания, внешние связи.</li>
+        <li><strong>Маппинг типов и конвертация схемы.</strong> Oracle-типы → PostgreSQL (особенно
+          <code>DATE</code> → <code>timestamp</code>, <code>NUMBER</code> → <code>numeric</code>/<code>bigint</code>).</li>
+        <li><strong>Конвертация PL/SQL.</strong> Пакеты → схемы с функциями; автономные транзакции →
+          <code>dblink</code> или смена архитектуры; функции/триггеры → PL/pgSQL. Часть — автоматически,
+          часть — вручную.</li>
+        <li><strong>Миграция данных.</strong> Перенос, <code>setval</code> для последовательностей, проверка
+          объёмов и контрольных сумм.</li>
+        <li><strong>Тесты эквивалентности.</strong> Одни и те же запросы/отчёты прогоняли на Oracle и
+          PostgreSQL и <strong>сравнивали результаты</strong>. Это ловило и <code>''</code>-vs-NULL, и порядок
+          NULL, и ошибки в <code>ROWNUM</code>-логике.</li>
+        <li><strong>Сравнение производительности.</strong> Планы и замеры на сопоставимых объёмах; подгонка
+          индексов и статистики.</li>
+        <li><strong>Настройка PostgreSQL.</strong> <code>autovacuum</code>, <code>work_mem</code>,
+          <code>random_page_cost</code> под SSD, статистика, мониторинг (<code>pg_stat_statements</code>,
+          bloat, locks).</li>
+        <li><strong>Поэтапное переключение</strong> с возможностью отката.</li>
+      </ol>
+
+      <div class="box gold">
+        <span class="t">★ Готовый ответ по Вопросу 4 (сжато)</span>
+        <p>«MVCC в обеих СУБД даёт главное: читатели не блокируют писателей. Различие — где хранятся прошлые
+          версии. В Oracle — в undo, снимок по SCN; в PostgreSQL — прямо в страницах таблиц
+          (<code>xmin/xmax</code>), а старые версии убирает <code>VACUUM</code>. Отсюда специфика PostgreSQL:
+          bloat, важность <code>autovacuum</code> и влияние долгих транзакций. По блокировкам: изменение — на
+          уровне строки, чтение никого не блокирует, но DDL в PostgreSQL конфликтует с чтениями — поэтому
+          используем <code>CREATE INDEX CONCURRENTLY</code> и retry на сериализационные ошибки. По конвертации
+          труднее всего дались: <code>''</code> ≠ NULL, отсутствие PACKAGE (группировали в схемы) и автономных
+          транзакций (<code>dblink</code> или вынос логов из транзакции), а также <code>DATE</code>, который в
+          Oracle содержит время. Плюс массовая замена
+          <code>NVL</code>/<code>DECODE</code>/<code>ROWNUM</code>/<code>(+)</code>/<code>CONNECT BY</code>».</p>
+      </div>
+
+      <div class="box note">
+        <span class="t">Что подчеркнуть про свой опыт</span>
+        <p>Миграция — это не «перенести данные», а <strong>перенести поведение</strong>: типы, семантику NULL,
+          логику в коде БД и производительность. Тесты эквивалентности и замеры — в центре процесса: только так
+          ловятся «тихие» расхождения.</p>
+      </div>
+
+      <footer>
+        <p><a href="index.html">← Все вопросы</a> · <a href="q3-sql-explain.html">Вопрос 3: оптимизация SQL</a></p>
+      </footer>
+    </section>
+  </article>
+  </main>
+</div>
+<script>if (window.hljs) hljs.highlightAll();</script>
+</body>
+</html>
