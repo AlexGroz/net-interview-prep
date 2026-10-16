@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вопрос 8 · Секционирование и partition pruning</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css">
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/csharp.min.js"></script>
+<style>
+  :root{
+    --bg:#f7f8fb; --ink:#1c2230; --muted:#5a6478; --line:#e3e7f0;
+    --brand:#4f46e5; --tip:#0f9d58; --warn:#d97706; --gold:#b45309; --note:#2563eb;
+    --code-bg:#0d1117; --shadow:0 10px 30px rgba(20,28,60,.08);
+    --mono:"JetBrains Mono","Fira Code",ui-monospace,Menlo,Consolas,monospace;
+    --sans:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.7;-webkit-font-smoothing:antialiased}
+  .layout{display:grid;grid-template-columns:280px minmax(0,1fr);max-width:1280px;margin:0 auto}
+  aside{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:28px 20px 60px;border-right:1px solid var(--line);background:linear-gradient(180deg,#fff,#f4f6fc)}
+  aside .brandsmall{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--brand);font-weight:700}
+  aside h2{font-size:16px;margin:6px 0 18px;line-height:1.35}
+  aside nav a{display:block;color:var(--muted);text-decoration:none;font-size:14.5px;padding:7px 12px;border-radius:9px;transition:.15s}
+  aside nav a:hover{background:#eef1fa;color:var(--ink)}
+  main{padding:44px 54px 110px}
+  article{max-width:860px;margin:0 auto}
+  .hero{background:linear-gradient(135deg,#4f46e5,#0ea5e9);color:#fff;border-radius:14px;padding:36px 40px;box-shadow:var(--shadow);margin-bottom:36px}
+  .hero .kicker{font-size:12.5px;text-transform:uppercase;letter-spacing:.16em;opacity:.9;font-weight:700}
+  .hero h1{font-size:30px;line-height:1.2;margin:12px 0;font-weight:800}
+  .hero p{margin:0;font-size:17px;opacity:.96;max-width:60ch}
+  .hero .meta{margin-top:18px;font-size:13.5px;opacity:.9;border-top:1px solid rgba(255,255,255,.3);padding-top:12px}
+  .topnav{margin:0 0 18px;font-size:14.5px;color:var(--muted)}
+  .topnav a{text-decoration:none;font-weight:600}
+  .topnav span{margin:0 9px;color:#c3cad9}
+  h2{font-size:25px;margin:52px 0 14px;padding-bottom:10px;border-bottom:2px solid var(--line)}
+  h3{font-size:19px;margin:30px 0 8px}
+  p{margin:12px 0}
+  ul,ol{margin:12px 0;padding-left:24px}
+  li{margin:6px 0}
+  strong{color:#111726}
+  code{font-family:var(--mono);font-size:.9em;background:#eef1f8;color:#b4007a;padding:2px 6px;border-radius:6px;border:1px solid #e0e5f2}
+  pre{background:var(--code-bg);border-radius:12px;padding:18px 20px;overflow:auto;box-shadow:var(--shadow);border:1px solid #1b2434;margin:16px 0}
+  pre code{background:none;color:#e6edf3;border:none;padding:0;font-size:14px;line-height:1.6}
+  .codewrap{margin:16px 0}
+  .codewrap .cap{font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:600}
+  .box{border-radius:12px;padding:15px 20px;margin:18px 0;border-left:5px solid;background:#fff;box-shadow:var(--shadow)}
+  .box .t{font-weight:800;font-size:13.5px;letter-spacing:.03em;text-transform:uppercase;margin-bottom:5px;display:block}
+  .box p:first-of-type{margin-top:0}.box p:last-child{margin-bottom:0}
+  .tip{border-color:var(--tip)} .tip .t{color:var(--tip)}
+  .warn{border-color:var(--warn)} .warn .t{color:var(--warn)}
+  .gold{border-color:var(--gold);background:linear-gradient(180deg,#fffdf5,#fff)} .gold .t{color:var(--gold)}
+  .note{border-color:var(--note)} .note .t{color:var(--note)}
+  .danger{border-color:#dc2626} .danger .t{color:#dc2626}
+  table{border-collapse:collapse;width:100%;margin:18px 0;font-size:15px;background:#fff;box-shadow:var(--shadow);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#eef1fa;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:#38405a}
+  tr:last-child td{border-bottom:none}
+  .qa{border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);padding:4px 22px;margin:18px 0}
+  .qa .q{font-weight:800;color:var(--brand)}
+  footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+  @media(max-width:960px){
+    .layout{grid-template-columns:1fr}
+    aside{position:static;height:auto;border-right:none;border-bottom:1px solid var(--line)}
+    main{padding:24px 16px 70px}
+    .hero{padding:26px 22px}.hero h1{font-size:24px}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <div class="brandsmall">PostgreSQL · Большие таблицы</div>
+    <h2>Вопрос 8. Секционирование</h2>
+    <nav>
+      <a href="index.html">← Все вопросы</a>
+      <a href="#q8-what">Что такое секционирование</a>
+      <a href="#q8-why">Что оно даёт</a>
+      <a href="#q8-pruning">Partition pruning: когда работает</a>
+      <a href="#q8-linq">Ошибки со стороны .NET</a>
+      <a href="#q8-check">Как проверить</a>
+      <a href="#q8-practice">Практика и EF Core</a>
+      <a href="#q8-answer">Готовый ответ</a>
+    </nav>
+  </aside>
+  <main>
+  <article>
+    <div class="topnav">
+      <a href="index.html">← Все вопросы</a><span>·</span><a href="q7-bloat-hot.html">Вопрос 7</a><span>·</span><strong>Вопрос 8: секционирование</strong><span>·</span><a href="q9-integration-api.html">Вопрос 9</a>
+    </div>
+    <div class="hero" style="background:linear-gradient(135deg,#0ea5e9,#4f46e5)">
+      <div class="kicker">Подготовка к собеседованию · PostgreSQL и .NET</div>
+      <h1>Секционирование больших таблиц и partition pruning</h1>
+      <p>Зачем делить таблицу на секции, по какому ключу выбирать Range / List / Hash и почему запрос
+         из .NET может заставить PostgreSQL читать <em>все</em> секции вместо одной.</p>
+      <div class="meta">Алексей Грознов · миграция терабайтных таблиц, PostgreSQL, EF Core</div>
+    </div>
+
+    <section id="q8-what">
+      <h2>Что такое декларативное секционирование</h2>
+      <p>Секционирование — это когда одна «логическая» таблица физически состоит из <strong>множества таблиц-секций</strong>
+        (PostgreSQL 10+). Секции не пересекаются и определяются <strong>ключом секционирования</strong>:
+        по диапазону, по списку значений или по хэшу.</p>
+      <div class="codewrap">
+        <pre><code class="language-sql">CREATE TABLE orders (
+    id         bigint      NOT NULL,
+    created_at timestamptz NOT NULL,
+    user_id    uuid        NOT NULL,
+    status     text        NOT NULL,
+    PRIMARY KEY (id, created_at)          -- ключ секционирования обязан входить в PK/уникальные ключи
+) PARTITION BY RANGE (created_at);
+
+CREATE TABLE orders_2026_01 PARTITION OF orders
+    FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');
+CREATE TABLE orders_2026_02 PARTITION OF orders
+    FOR VALUES FROM ('2026-02-01') TO ('2026-03-01');
+
+-- «страховка» от ошибок вставки: секция для всего остального
+CREATE TABLE orders_default PARTITION OF orders DEFAULT;</code></pre>
+      </div>
+      <table>
+        <thead><tr><th>Стратегия</th><th>Когда выбирают</th><th>Пример</th></tr></thead>
+        <tbody>
+          <tr><td><strong>RANGE</strong></td><td>Данные растут во времени, старые уходят целиком</td><td>по <code>created_at</code> — месяц/день/год</td></tr>
+          <tr><td><strong>LIST</strong></td><td>Ограниченный набор значений (арендатор, регион, тип)</td><td>по <code>tenant_id</code> или <code>region</code></td></tr>
+          <tr><td><strong>HASH</strong></td><td>Равномерное распределение, когда естественного ключа нет</td><td>по <code>user_id</code> на 16 секций</td></tr>
+          <tr><td><strong>Субсекционирование</strong></td><td>Нужны две оси (например, время + арендатор)</td><td>RANGE по дате → LIST по региону</td></tr>
+        </tbody>
+      </table>
+      <div class="box tip">
+        <span class="t">Главный критерий выбора ключа</span>
+        <p>Ключ должен совпадать с тем, по чему <strong>фильтруют почти все запросы</strong> (обычно дата) и что
+          удобно удалять целиком. Если секционировать «наугад», запросы будут читать все секции — то есть станет
+          <em>хуже</em>, чем было.</p>
+      </div>
+    </section>
+    <section id="q8-why">
+      <h2>Что даёт секционирование</h2>
+      <ul>
+        <li><strong>Partition pruning</strong> — планировщик отбрасывает секции, которые не могут содержать
+          подходящих строк. Запрос «за январь» читает одну секцию вместо сотни.</li>
+        <li><strong>Дешёвое удаление старых данных</strong> — вместо <code>DELETE</code> на миллионы строк
+          (и миллионов мёртвых версий) делается <code>DETACH PARTITION</code> или <code>DROP TABLE</code>:
+          миллисекунды и никакого bloat.</li>
+        <li><strong>Обслуживание по частям</strong> — VACUUM и ANALYZE идут по отдельным (меньшим) секциям, а
+          статистика по свежим данным точнее.</li>
+        <li><strong>Меньше индексов на диске</strong> — у каждой секции свой B-tree; при большом числе вставок
+          это заметно дешевле одного гигантского индекса.</li>
+        <li><strong>Гибкость размещения</strong> — холодные секции можно держать на «медленных» дисках, горячие — на
+          быстрых (tablespace).</li>
+      </ul>
+      <div class="box warn">
+        <span class="t">Чего секционирование не делает</span>
+        <p>Оно не ускоряет запрос, который <strong>не фильтрует по ключу секционирования</strong>. И у него есть
+          цена: больше объектов в каталоге, требуется управление секциями (создание заранее, обслуживание
+          границ) и аккуратность с уникальными ключами.</p>
+      </div>
+    </section>
+
+    <section id="q8-pruning">
+      <h2>Partition pruning: когда работает, а когда нет</h2>
+      <p>Pruning — оптимизация <em>на этапе планирования</em>: PostgreSQL сравнивает условие на колонку-ключ с
+        границами секций и выкидывает лишние. Чтобы это сработало, условие должно быть <strong>простым
+        сравнением колонки с константой</strong> и <strong>типы должны совпадать</strong>.</p>
+      <table>
+        <thead><tr><th>Условие в запросе</th><th>Pruning</th><th>Почему</th></tr></thead>
+        <tbody>
+          <tr><td><code>created_at &gt;= '2026-01-01' AND created_at &lt; '2026-02-01'</code></td><td>да</td><td>Сравнение колонки с константами того же типа</td></tr>
+          <tr><td><code>created_at &gt;= now() - interval '1 day'</code></td><td>да*</td><td>Функция стабильная, но значение вычисляется один раз на запрос</td></tr>
+          <tr><td><code>date(created_at) = '2026-01-15'</code></td><td>нет</td><td>Функция <em>по колонке</em> — планировщик не знает границ</td></tr>
+          <tr><td><code>created_at::text LIKE '2026-01%'</code></td><td>нет</td><td>Приведение колонки к другому типу</td></tr>
+          <tr><td><code>created_at = $1</code>, но параметр передан как <code>text</code></td><td>зависит</td><td>Несовпадение типов мешает сопоставить границы</td></tr>
+          <tr><td>Условие в <code>JOIN</code> подзапроса, вычисленное во время выполнения</td><td>часто нет</td><td>Границы неизвестны на этапе планирования</td></tr>
+        </tbody>
+      </table>
+      <p>Отдельный практический момент — <strong>параметризованные запросы</strong> (как раз то, что генерирует
+        EF Core). У PostgreSQL есть выбор между планом «под конкретные значения» и «общим» (generic) планом для
+        prepared statement. Обычно pruning работает и с параметрами, но если тип параметра «размылся»
+        (например, приходит строка), отсечение теряется.</p>
+    </section>
+    <section id="q8-linq">
+      <h2>Ошибки со стороны .NET, из-за которых читаются все секции</h2>
+      <p>Типовая причина «Seq Scan по всем секциям» — <strong>функция или приведение к колонке-ключу</strong>,
+        появившиеся в LINQ. Планировщик видит не колонку, а выражение и уже не может отбросить секции.</p>
+      <div class="codewrap">
+        <pre><code class="language-csharp">// ✘ функция по колонке: date(year FROM created_at) = 2026 → все секции
+var bad1 = await db.Orders.Where(o =&gt; o.CreatedAt.Year == 2026).ToListAsync();
+
+// ✘ приведение к дате: created_at::date = '2026-01-15' → все секции
+var bad2 = await db.Orders.Where(o =&gt; o.CreatedAt.Date == day).ToListAsync();
+
+// ✘ строка как параметр: сравнение с text вместо timestamptz
+var bad3 = await db.Orders
+    .FromSqlInterpolated($"SELECT * FROM orders WHERE created_at::text LIKE {prefix + \"%\"}")
+    .ToListAsync();
+
+// ✔ диапазон: сравнение колонки с типизированными границами → одна секция
+var from = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+var to   = from.AddMonths(1);
+var good = await db.Orders
+    .Where(o =&gt; o.CreatedAt &gt;= from &amp;&amp; o.CreatedAt &lt; to)
+    .ToListAsync();</code></pre>
+      </div>
+      <ul>
+        <li><strong>Фильтр «не по ключу»</strong> — тоже чтение всех секций. Если таблица секционирована по дате,
+          а запрос идёт «по <code>user_id</code>», секции не отбросить (в PG индексы у секционных таблиц
+          локальные). В таком случае ключ выбирают иначе — например, субсекционирование по пользователю.</li>
+        <li><strong><code>Contains</code> по списку</strong> работает нормально, но только если условие
+          сравнивает именно колонку-ключ и список типизирован (<code>List&lt;DateTime&gt;</code>, а не строки).</li>
+        <li><strong>Значение <code>DateTime</code> и <code>Kind</code>:</strong> для <code>timestamptz</code>
+          передавайте UTC — иначе значение «поедет», и данные могут уйти не в ту секцию (или вообще в
+          <code>DEFAULT</code>).</li>
+        <li><strong>Проверяйте SQL, а не LINQ:</strong> <code>ToQueryString()</code> сразу показывает, появилась ли
+          функция по колонке.</li>
+      </ul>
+    </section>
+
+    <section id="q8-check">
+      <h2>Как проверить, что pruning действительно работает</h2>
+      <div class="codewrap">
+        <pre><code class="language-text">-- секционировано по месяцам, фильтр «за январь»
+
+✘ pruning нет:
+Append  (cost=…)
+  -&gt; Seq Scan on orders_2026_01  …
+  -&gt; Seq Scan on orders_2026_02  …      ← читаем 12 секций
+  …
+  -&gt; Seq Scan on orders_2026_12  …
+
+✔ pruning есть:
+Append  (cost=…)
+  Subplans Removed: 11                  ← 11 секций отброшено планировщиком
+  -&gt; Index Scan using orders_2026_01_created_at_idx on orders_2026_01 …</code></pre>
+      </div>
+      <ul>
+        <li><strong><code>Subplans Removed</code></strong> — прямая метрика отсечения; в
+          <code>EXPLAIN (ANALYZE)</code> дополнительно видно, сколько строк реально прочитано из каждой секции.</li>
+        <li><strong><code>BUFFERS</code></strong> — сколько страниц запрос «потрогал». Если читается вся таблица,
+          <code>shared read</code> будет огромным, независимо от того, что вернулось мало строк.</li>
+        <li><strong>Статистика по секциям:</strong> в <code>pg_stat_user_tables</code> растут
+          <code>seq_scan</code>/<code>seq_tup_read</code> у <em>всех</em> секций — значит, отсечения нет.</li>
+        <li><strong><code>pg_stat_statements</code></strong> — какие запросы дают наибольший I/O; полезно
+          сопоставить с тем, что генерирует приложение (там же видно нормализованный SQL).</li>
+        <li><strong><code>auto_explain</code></strong> — пишет план медленных запросов в лог: удобно ловить
+          «внезапно ставшие полными» сканирования в проде.</li>
+      </ul>
+    </section>
+    <section id="q8-practice">
+      <h2>Практика: как это делается и как живёт с EF Core</h2>
+      <ul>
+        <li><strong>Секции создаются заранее.</strong> Никто не создаёт их «по требованию из приложения»: это
+          делает отдельное задание (например, <code>pg_partman</code>) — оно же и удаляет старые. Если секции
+          закончились, строки уйдут в <code>DEFAULT</code>, и запросы начнут читать её целиком.</li>
+        <li><strong>Удаление старых данных</strong> — это <code>DETACH PARTITION</code> (с
+          <code>CONCURRENTLY</code>, чтобы не блокировать) и затем <code>DROP TABLE</code> уже отсоединённой
+          секции. Никаких миллионов удаляемых строк и никакого bloat.</li>
+        <li><strong>Индексы создаются на родительской таблице</strong> — PostgreSQL создаёт их на всех существующих
+          секциях и на будущих. Уникальные ключи обязаны включать ключ секционирования
+          (<code>PRIMARY KEY (id, created_at)</code>).</li>
+        <li><strong>Загрузка больших объёмов при миграции:</strong> сначала наполняем <em>обычную</em> таблицу,
+          а потом <code>ALTER TABLE orders ATTACH PARTITION orders_2026_01
+          FOR VALUES FROM (…) TO (…)</code> — это быстрее и безопаснее, чем вставлять миллионы строк в уже
+          партиционированную таблицу.</li>
+      </ul>
+      <div class="box note">
+        <span class="t">EF Core и секционирование</span>
+        <p>EF Core <strong>не управляет</strong> секциями: это забота БД. В модели таблица просто маппится на
+          родителя, запросы и вставки работают как с обычной таблицей. Создание секций и индексов делают SQL-скрипты
+          в миграциях:</p>
+      </div>
+      <div class="codewrap">
+        <pre><code class="language-csharp">// EF Core-миграция: секционирование задаётся обычным SQL
+migrationBuilder.Sql(@"
+    ALTER TABLE orders SET (fillfactor = 85);
+    CREATE TABLE IF NOT EXISTS orders_2026_03 PARTITION OF orders
+        FOR VALUES FROM ('2026-03-01') TO ('2026-04-01');
+");
+// помните: CREATE TABLE ... PARTITION OF нельзя выполнять внутри транзакции,
+// где уже менялась схема — в PG это часть DDL-ограничений</code></pre>
+      </div>
+      <p>И обязательный чек-лист перед тем, как считать задачу закрытой: секций десятки, а не тысячи; есть
+        <code>DEFAULT</code>-секция или контроль за созданием новых; настроено удаление старых; горячие запросы
+        проверены на отсечение в <code>EXPLAIN</code>.</p>
+    </section>
+
+    <section id="q8-answer">
+      <h2>Готовый ответ</h2>
+      <div class="qa">
+        <p class="q">В каких случаях вы выберете секционирование и по какому ключу?</p>
+        <p>«Секционирование я рассматриваю, когда таблица становится очень большой <em>и по ней есть
+          естественная ось</em>. В подавляющем большинстве случаев это <strong>RANGE по дате</strong>: данные
+          растут во времени, а старые периоды нужно хранить и потом удалять целиком. Если сущность логически
+          делится по арендатору или региону, беру <strong>LIST</strong>; если равномерно разложить данные без
+          естественного ключа — <strong>HASH</strong>. Ключ я выбираю по тому, <em>как фильтруют почти все
+          запросы</em>: иначе секционирование не даёт отсечения и только добавляет накладные расходы. И главный
+          практический выигрыш для меня не столько скорость, сколько <strong>обслуживание</strong>: удаление
+          старых данных — это <code>DETACH</code> и <code>DROP</code> секции за миллисекунды вместо миллионов
+          <code>DELETE</code>, которые раздувают таблицу и индексы.»</p>
+      </div>
+      <div class="qa">
+        <p class="q">Как планировщик ведёт себя при оптимизации запросов к секционированным таблицам?</p>
+        <p>«На этапе планирования работает <strong>partition pruning</strong>: PostgreSQL сопоставляет условие на
+          колонку-ключ с границами секций и отбрасывает неподходящие. В <code>EXPLAIN</code> это видно строкой
+          <code>Subplans Removed</code>. Ключевое условие — сравнение должно быть простым (<code>&gt;=</code>,
+          <code>&lt;</code>, <code>=</code>) и типы должны совпадать. Как только в запросе появляется
+          <em>функция или приведение по колонке-ключу</em>, планировщик теряет информацию о границах — и в плане
+          появляется <code>Append</code> с <code>Seq Scan</code> по всем секциям.»</p>
+      </div>
+      <div class="qa">
+        <p class="q">Какие ошибки в LINQ и SQL приводят к сканированию всех секций?</p>
+        <p>«Из .NET чаще всего приходят три вещи. Первое — функции по колонке, которые выглядят «естественно» в
+          LINQ: <code>CreatedAt.Year</code>, <code>CreatedAt.Date</code>, <code>ToString().StartsWith(...)</code>.
+          Второе — несовпадение типов: дата уходит как строка (<code>text</code>), и условие теряет возможность
+          сопоставления с границами. Третье — фильтр <em>не по ключу секционирования</em>: если таблица
+          секционирована по дате, а запрос по <code>user_id</code>, отсечения не будет вообще, потому что индексы
+          в PostgreSQL локальные. Лечится это просто: передавать типизированные значения
+          (<code>DateTime</code>, <code>Guid</code>) и писать <strong>диапазон</strong>
+          (<code>&gt;= from AND &lt; to</code>) вместо функций по колонке. И проверять результат через
+          <code>ToQueryString()</code> плюс <code>EXPLAIN (ANALYZE, BUFFERS)</code>, а не «на глаз».»</p>
+      </div>
+    </section>
+    <footer>
+      <p><a href="index.html">← Все вопросы</a> · <a href="q9-integration-api.html">Вопрос 9: интеграция и API</a></p>
+    </footer>
+  </article>
+  </main>
+</div>
+<script>if (window.hljs) hljs.highlightAll();</script>
+</body>
+</html>

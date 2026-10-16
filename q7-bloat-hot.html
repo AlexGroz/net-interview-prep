@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вопрос 7 · Bloat и HOT-апдейты</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css">
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/csharp.min.js"></script>
+<style>
+  :root{
+    --bg:#f7f8fb; --ink:#1c2230; --muted:#5a6478; --line:#e3e7f0;
+    --brand:#4f46e5; --tip:#0f9d58; --warn:#d97706; --gold:#b45309; --note:#2563eb;
+    --code-bg:#0d1117; --shadow:0 10px 30px rgba(20,28,60,.08);
+    --mono:"JetBrains Mono","Fira Code",ui-monospace,Menlo,Consolas,monospace;
+    --sans:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.7;-webkit-font-smoothing:antialiased}
+  .layout{display:grid;grid-template-columns:280px minmax(0,1fr);max-width:1280px;margin:0 auto}
+  aside{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:28px 20px 60px;border-right:1px solid var(--line);background:linear-gradient(180deg,#fff,#f4f6fc)}
+  aside .brandsmall{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--brand);font-weight:700}
+  aside h2{font-size:16px;margin:6px 0 18px;line-height:1.35}
+  aside nav a{display:block;color:var(--muted);text-decoration:none;font-size:14.5px;padding:7px 12px;border-radius:9px;transition:.15s}
+  aside nav a:hover{background:#eef1fa;color:var(--ink)}
+  main{padding:44px 54px 110px}
+  article{max-width:860px;margin:0 auto}
+  .hero{background:linear-gradient(135deg,#4f46e5,#0ea5e9);color:#fff;border-radius:14px;padding:36px 40px;box-shadow:var(--shadow);margin-bottom:36px}
+  .hero .kicker{font-size:12.5px;text-transform:uppercase;letter-spacing:.16em;opacity:.9;font-weight:700}
+  .hero h1{font-size:30px;line-height:1.2;margin:12px 0;font-weight:800}
+  .hero p{margin:0;font-size:17px;opacity:.96;max-width:60ch}
+  .hero .meta{margin-top:18px;font-size:13.5px;opacity:.9;border-top:1px solid rgba(255,255,255,.3);padding-top:12px}
+  .topnav{margin:0 0 18px;font-size:14.5px;color:var(--muted)}
+  .topnav a{text-decoration:none;font-weight:600}
+  .topnav span{margin:0 9px;color:#c3cad9}
+  h2{font-size:25px;margin:52px 0 14px;padding-bottom:10px;border-bottom:2px solid var(--line)}
+  h3{font-size:19px;margin:30px 0 8px}
+  p{margin:12px 0}
+  ul,ol{margin:12px 0;padding-left:24px}
+  li{margin:6px 0}
+  strong{color:#111726}
+  code{font-family:var(--mono);font-size:.9em;background:#eef1f8;color:#b4007a;padding:2px 6px;border-radius:6px;border:1px solid #e0e5f2}
+  pre{background:var(--code-bg);border-radius:12px;padding:18px 20px;overflow:auto;box-shadow:var(--shadow);border:1px solid #1b2434;margin:16px 0}
+  pre code{background:none;color:#e6edf3;border:none;padding:0;font-size:14px;line-height:1.6}
+  .codewrap{margin:16px 0}
+  .codewrap .cap{font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:600}
+  .box{border-radius:12px;padding:15px 20px;margin:18px 0;border-left:5px solid;background:#fff;box-shadow:var(--shadow)}
+  .box .t{font-weight:800;font-size:13.5px;letter-spacing:.03em;text-transform:uppercase;margin-bottom:5px;display:block}
+  .box p:first-of-type{margin-top:0}.box p:last-child{margin-bottom:0}
+  .tip{border-color:var(--tip)} .tip .t{color:var(--tip)}
+  .warn{border-color:var(--warn)} .warn .t{color:var(--warn)}
+  .gold{border-color:var(--gold);background:linear-gradient(180deg,#fffdf5,#fff)} .gold .t{color:var(--gold)}
+  .note{border-color:var(--note)} .note .t{color:var(--note)}
+  .danger{border-color:#dc2626} .danger .t{color:#dc2626}
+  table{border-collapse:collapse;width:100%;margin:18px 0;font-size:15px;background:#fff;box-shadow:var(--shadow);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#eef1fa;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:#38405a}
+  tr:last-child td{border-bottom:none}
+  .qa{border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);padding:4px 22px;margin:18px 0}
+  .qa .q{font-weight:800;color:var(--brand)}
+  footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+  @media(max-width:960px){
+    .layout{grid-template-columns:1fr}
+    aside{position:static;height:auto;border-right:none;border-bottom:1px solid var(--line)}
+    main{padding:24px 16px 70px}
+    .hero{padding:26px 22px}.hero h1{font-size:24px}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <div class="brandsmall">PostgreSQL · Обслуживание</div>
+    <h2>Вопрос 7. Bloat и HOT-апдейты</h2>
+    <nav>
+      <a href="index.html">← Все вопросы</a>
+      <a href="#q7-bloat">Откуда берётся bloat</a>
+      <a href="#q7-hot">HOT-апдейты и fillfactor</a>
+      <a href="#q7-diagnose">Диагностика</a>
+      <a href="#q7-fix">Как лечить</a>
+      <a href="#q7-dotnet">Что зависит от .NET-кода</a>
+      <a href="#q7-answer">Готовый ответ</a>
+    </nav>
+  </aside>
+  <main>
+  <article>
+    <div class="topnav">
+      <a href="index.html">← Все вопросы</a><span>·</span><a href="q6-oracle-to-postgres.html">Вопрос 6</a><span>·</span><strong>Вопрос 7: bloat и HOT</strong><span>·</span><a href="q8-partitioning.html">Вопрос 8</a>
+    </div>
+    <div class="hero" style="background:linear-gradient(135deg,#0f9d58,#4f46e5)">
+      <div class="kicker">Подготовка к собеседованию · PostgreSQL изнутри</div>
+      <h1>Раздувание таблиц, HOT-апдейты и роль fillfactor</h1>
+      <p>Почему интенсивные UPDATE и DELETE «раздувают» таблицы и индексы, как встроенный HOT-механизм
+         этого избегает и что нужно сделать в схеме и в коде, чтобы база не деградировала.</p>
+      <div class="meta">Алексей Грознов · PostgreSQL (QPT, DBA2, DBA3), высоконагруженные сервисы на .NET</div>
+    </div>
+
+    <section id="q7-bloat">
+      <h2>Откуда берётся bloat</h2>
+      <p>В PostgreSQL <strong>UPDATE не меняет строку на месте</strong>: создаётся <em>новая версия</em> строки,
+        а старая помечается мёртвой и ждёт, пока её уберёт VACUUM (это цена MVCC — главы 21 и 25 SQL-раздела).
+        DELETE — то же самое: строка не исчезает, а становится мёртвой версией.</p>
+      <p>Если версии не успевают убираться, файлы таблицы и индексов растут быстрее, чем реальные данные.
+        Это и есть <strong>bloat</strong> — «раздувание». Последствия:</p>
+      <ul>
+        <li>таблица и индексы занимают больше места (а значит, больше страниц читается — растёт I/O);</li>
+        <li>индекс становится «мягким»: больше страниц на тот же объём данных, хуже кэшируется;</li>
+        <li>autovacuum работает дольше и чаще, добавляя нагрузку;</li>
+        <li>в крайних случаях планы перестают использовать индекс (планировщик считает Seq Scan дешевле).</li>
+      </ul>
+      <div class="box tip">
+        <span class="t">Как это формулировать</span>
+        <p>«Bloat — это пространство, занятое мёртвыми версиями строк и «дырками» в страницах. Таблица при этом
+          отдаёт те же данные, но за большее число страниц, поэтому запросы дорожают, а autovacuum не
+          справляется.»</p>
+      </div>
+    </section>
+    <section id="q7-hot">
+      <h2>HOT-апдейты и fillfactor</h2>
+      <p><strong>HOT</strong> (<em>Heap-Only Tuples</em>) — встроенная оптимизация PostgreSQL: если при UPDATE
+        новая версия строки помещается <strong>в ту же страницу</strong> и ни одно из изменённых полей
+        <strong>не входит в индекс</strong>, то записи в индексы <em>не создаются вообще</em>. Новая версия просто
+        прицепляется к цепочке в странице (HOT chain).</p>
+      <p>Отсюда два условия HOT — их и надо назвать на интервью:</p>
+      <ol>
+        <li><strong>Меняемые колонки не индексированы.</strong> Если обновляется колонка, которая есть хотя бы в
+          одном индексе, PostgreSQL обязан обновить индекс → HOT невозможен.</li>
+        <li><strong>На странице есть свободное место.</strong> Если страница заполнена полностью, новую версию
+          положить некуда, и строка уходит в другую страницу.</li>
+      </ol>
+      <p>Второе условие решается <strong><code>fillfactor</code></strong> — процентом заполнения страниц при
+        записи. Для «горячих» таблиц ставят 80–90 %: часть страницы заранее оставляют пустой, чтобы будущим
+        версиям было куда лечь.</p>
+      <div class="codewrap">
+        <pre><code class="language-sql">-- таблица, которую часто обновляют
+ALTER TABLE orders SET (fillfactor = 85);
+
+-- при пересоздании/переупаковке таблицы
+CREATE INDEX idx_orders_status ON orders (status) WITH (fillfactor = 90);</code></pre>
+      </div>
+      <div class="box warn">
+        <span class="t">Главная ловушка</span>
+        <p>Индекс на «живой» колонке — например <code>updated_at</code> или <code>status</code>, который меняется
+          на каждом шаге процесса, — <strong>отключает HOT</strong> и заставляет писать в индекс при каждом
+          UPDATE. Тогда «миллионы UPDATE в сутки» превращаются в миллионы новых индексных записей и рост bloat
+          индексов.</p>
+      </div>
+    </section>
+
+    <section id="q7-diagnose">
+      <h2>Как диагностировать</h2>
+      <p>Сначала — статистика по таблицам. Если <code>n_dead_tup</code> растёт, а <code>n_tup_hot_upd</code>
+        близок к нулю при большом <code>n_tup_upd</code>, значит HOT не работает:</p>
+      <div class="codewrap">
+        <pre><code class="language-sql">SELECT relname,
+       n_live_tup, n_dead_tup,
+       n_tup_upd, n_tup_hot_upd,          -- HOT-обновления: чем больше доля, тем лучше
+       n_tup_del,
+       last_vacuum, last_autovacuum,
+       pg_size_pretty(pg_total_relation_size(relid)) AS total_size
+FROM pg_stat_user_tables
+ORDER BY n_dead_tup DESC
+LIMIT 20;
+
+-- доля HOT-апдейтов: близко к 1 — схема «дружелюбна» к HOT
+SELECT relname,
+       round(n_tup_hot_upd::numeric / GREATEST(n_tup_upd, 1), 2) AS hot_ratio,
+       round(n_dead_tup::numeric / GREATEST(n_live_tup, 1), 2)   AS dead_ratio
+FROM pg_stat_user_tables
+WHERE n_tup_upd &gt; 0
+ORDER BY n_dead_tup DESC LIMIT 20;</code></pre>
+      </div>
+      <ul>
+        <li><strong>Точный размер bloat</strong> — расширение <code>pgstattuple</code>:
+          <code>SELECT * FROM pgstattuple('orders');</code> даёт долю мёртвых кортежей и «свободного»
+          пространства; для индексов — <code>pgstatindex('idx_orders_created_at')</code>.</li>
+        <li><strong>Аппроксимация без расширений</strong> — сравнить «ожидаемый» размер (число строк × средняя
+          ширина) с фактическим <code>pg_total_relation_size</code>, или воспользоваться известными
+          bloat-запросами из wiki.</li>
+        <li><strong>История обслуживания</strong> — <code>last_autovacuum</code> и настройки
+          <code>autovacuum_vacuum_scale_factor</code>: для большой таблицы «20 % изменённых строк» — это
+          очень много, поэтому порог часто занижают на уровне таблицы.</li>
+      </ul>
+    </section>
+    <section id="q7-fix">
+      <h2>Как лечить</h2>
+      <ul>
+        <li><strong>Дать autovacuum работать вовремя.</strong> Для больших «горячих» таблиц пороги по умолчанию
+          слишком грубые (20 % строк). Их сужают на уровне таблицы:</li>
+      </ul>
+      <div class="codewrap">
+        <pre><code class="language-sql">ALTER TABLE orders SET (
+    autovacuum_vacuum_scale_factor  = 0.01,   -- 1% изменённых строк вместо 20%
+    autovacuum_vacuum_threshold     = 1000,
+    autovacuum_vacuum_cost_limit    = 2000,   -- не душить очистку по стоимости
+    autovacuum_analyze_scale_factor = 0.005
+);</code></pre>
+      </div>
+      <ul>
+        <li><strong>fillfactor 80–90 %</strong> для таблиц с частыми UPDATE — место под новые версии прямо в
+          странице (условие HOT).</li>
+        <li><strong>Дружить с HOT по схеме:</strong> не индексировать колонки, которые меняются на каждом шаге;
+          вычистить лишние индексы (каждый индекс — это <em>дополнительная запись на каждый UPDATE</em>);
+          историю статусов вынести в отдельную таблицу-журнал.</li>
+        <li><strong>Партиционирование вместо массовых DELETE</strong> (вопрос 8): удаление старых данных — это
+          <code>DETACH PARTITION</code> / <code>DROP TABLE</code> за миллисекунды, без миллионов мёртвых версий.</li>
+        <li><strong>Убирать существующий bloat:</strong> <code>pg_repack</code> — пересобирает таблицу без
+          длительной блокировки, <code>VACUUM FULL</code> — возвращает место ОС, но берёт
+          <code>ACCESS EXCLUSIVE</code> (только в окно обслуживания), <code>REINDEX CONCURRENTLY</code> — для
+          раздутых индексов.</li>
+        <li><strong>Не мешать очистке:</strong> долгие транзакции и <code>idle in transaction</code>
+          <em>держат горизонт</em>, и VACUUM не может удалить версии, которые ещё «видны» этой транзакции. Связь
+          с вопросом 4 прямая.</li>
+      </ul>
+    </section>
+
+    <section id="q7-dotnet">
+      <h2>Что зависит от .NET-кода</h2>
+      <p>Приложение может либо помогать базе, либо мешать — и это заметно именно на интенсивной записи:</p>
+      <div class="codewrap">
+        <pre><code class="language-csharp">// ✘ «На каждом шаге процесса» трогаем индексируемую колонку — HOT отключается
+order.UpdatedAt = DateTime.UtcNow;      // и на updated_at висит индекс
+await db.SaveChangesAsync(ct);
+
+// ✔ Массовое изменение — одной командой, без загрузки сущностей и лишних колонок
+await db.Orders
+    .Where(o =&gt; o.Status == OrderStatus.New &amp;&amp; o.CreatedAt &lt; cutoff)
+    .ExecuteUpdateAsync(s =&gt; s.SetProperty(o =&gt; o.Status, OrderStatus.Expired), ct);
+
+// ✔ Удаление старых данных — тоже одной командой и батчами, а не «всё сразу»
+await db.Orders.Where(o =&gt; o.CreatedAt &lt; cutoff).ExecuteDeleteAsync(ct);</code></pre>
+      </div>
+      <ul>
+        <li><strong>EF Core пишет только изменённые колонки</strong> для отслеживаемых сущностей — это помогает
+          HOT. Но если пометить сущность как <code>Modified</code> целиком или «приаттачить» её, уйдёт
+          <code>UPDATE</code> по всем колонкам.</li>
+        <li><strong><code>ExecuteUpdate</code>/<code>ExecuteDelete</code></strong> не загружают данные в память
+          — один SQL, меньше изменённых колонок, меньше мёртвых версий на клиенте.</li>
+        <li><strong>Репозиторий не должен обновлять «всё поле целиком»</strong>, если меняется одно значение —
+          экономим и запись, и индексы.</li>
+        <li><strong>Чтение — без трекинга</strong> (<code>AsNoTracking</code>), а для тяжёлой загрузки —
+          <code>COPY</code>/<code>NpgsqlBinaryImporter</code>: меньше транзакций и мёртвых версий.</li>
+        <li><strong>Долгие транзакции — враг очистки.</strong> Если приложение держит открытую транзакцию, пока
+          «докручивает» бизнес-процесс, autovacuum физически не может убрать версии (вопрос 4).</li>
+      </ul>
+    </section>
+    <section id="q7-answer">
+      <h2>Готовый ответ</h2>
+      <div class="qa">
+        <p class="q">Что такое Bloat и как вы его диагностируете?</p>
+        <p>«Bloat — это «раздувание» таблиц и индексов. В PostgreSQL UPDATE не меняет строку на месте: создаётся
+          новая версия, а старая остаётся мёртвой до тех пор, пока её не уберёт VACUUM. При интенсивной записи
+          файлы растут быстрее данных, страницы читаются «вхолостую», autovacuum начинает не успевать, а индексы
+          становятся «мягкими». Диагностирую по <code>pg_stat_user_tables</code>: смотрю
+          <code>n_dead_tup</code>, <code>n_tup_upd</code> и <code>n_tup_hot_upd</code>, а также
+          <code>last_autovacuum</code> и размер таблицы; точные цифры даёт <code>pgstattuple</code> для таблиц и
+          <code>pgstatindex</code> для индексов. Дальше смотрю, не держат ли горизонт долгие транзакции и
+          <code>idle in transaction</code> — при них VACUUM не может удалять версии.»</p>
+      </div>
+      <div class="qa">
+        <p class="q">Что такое HOT-апдейты и при каких условиях они работают?</p>
+        <p>«HOT (<em>Heap-Only Tuples</em>) — это когда при UPDATE новые версии строк не создают новых записей в
+          индексах. Условий ровно два: <strong>ни одна из изменяемых колонок не входит ни в один индекс</strong>,
+          и <strong>новая версия помещается в ту же страницу</strong>. Второе условие обеспечивает
+          <code>fillfactor</code>: для «горячих» таблиц его снижают до 80–90 %, оставляя место под новые версии.
+          Если же на часто обновляемой колонке (например, <code>status</code> или <code>updated_at</code>) висит
+          индекс, HOT не работает вообще — и каждый UPDATE тянет за собой запись в индекс. Поэтому я не
+          индексирую то, что меняется постоянно, и убираю лишние индексы.»</p>
+      </div>
+      <div class="qa">
+        <p class="q">Что можно сделать, чтобы .NET-приложение не «убивало» базу?</p>
+        <p>«Три вещи. На стороне схемы: <code>fillfactor</code>, заниженные пороги autovacuum для конкретных
+          таблиц, HOT-дружелюбный набор индексов, а для удаления старых данных — <strong>партиционирование</strong>,
+          чтобы удалять секции, а не писать миллионы DELETE. На стороне кода: массовые изменения делать через
+          <code>ExecuteUpdate</code>/<code>ExecuteDelete</code> и батчами, читать через
+          <code>AsNoTracking</code>, а транзакции держать короткими. И обязательный мониторинг: доля HOT-апдейтов,
+          мёртвые кортежи, дата последнего autovacuum — по ним сразу видно, что приложение начинает вредить.»</p>
+      </div>
+    </section>
+    <footer>
+      <p><a href="index.html">← Все вопросы</a> · <a href="q8-partitioning.html">Вопрос 8: секционирование</a></p>
+    </footer>
+  </article>
+  </main>
+</div>
+<script>if (window.hljs) hljs.highlightAll();</script>
+</body>
+</html>

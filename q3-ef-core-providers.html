@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вопрос 3 · EF Core при смене провайдера</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css">
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/csharp.min.js"></script>
+<style>
+  :root{
+    --bg:#f7f8fb; --ink:#1c2230; --muted:#5a6478; --line:#e3e7f0;
+    --brand:#4f46e5; --tip:#0f9d58; --warn:#d97706; --gold:#b45309; --note:#2563eb;
+    --code-bg:#0d1117; --shadow:0 10px 30px rgba(20,28,60,.08);
+    --mono:"JetBrains Mono","Fira Code",ui-monospace,Menlo,Consolas,monospace;
+    --sans:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.7;-webkit-font-smoothing:antialiased}
+  .layout{display:grid;grid-template-columns:280px minmax(0,1fr);max-width:1280px;margin:0 auto}
+  aside{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:28px 20px 60px;border-right:1px solid var(--line);background:linear-gradient(180deg,#fff,#f4f6fc)}
+  aside .brandsmall{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--brand);font-weight:700}
+  aside h2{font-size:16px;margin:6px 0 18px;line-height:1.35}
+  aside nav a{display:block;color:var(--muted);text-decoration:none;font-size:14.5px;padding:7px 12px;border-radius:9px;transition:.15s}
+  aside nav a:hover{background:#eef1fa;color:var(--ink)}
+  main{padding:44px 54px 110px}
+  article{max-width:860px;margin:0 auto}
+  .hero{background:linear-gradient(135deg,#4f46e5,#0ea5e9);color:#fff;border-radius:14px;padding:36px 40px;box-shadow:var(--shadow);margin-bottom:36px}
+  .hero .kicker{font-size:12.5px;text-transform:uppercase;letter-spacing:.16em;opacity:.9;font-weight:700}
+  .hero h1{font-size:30px;line-height:1.2;margin:12px 0;font-weight:800}
+  .hero p{margin:0;font-size:17px;opacity:.96;max-width:60ch}
+  .hero .meta{margin-top:18px;font-size:13.5px;opacity:.9;border-top:1px solid rgba(255,255,255,.3);padding-top:12px}
+  .topnav{margin:0 0 18px;font-size:14.5px;color:var(--muted)}
+  .topnav a{text-decoration:none;font-weight:600}
+  .topnav span{margin:0 9px;color:#c3cad9}
+  h2{font-size:25px;margin:52px 0 14px;padding-bottom:10px;border-bottom:2px solid var(--line)}
+  h3{font-size:19px;margin:30px 0 8px}
+  p{margin:12px 0}
+  ul,ol{margin:12px 0;padding-left:24px}
+  li{margin:6px 0}
+  strong{color:#111726}
+  code{font-family:var(--mono);font-size:.9em;background:#eef1f8;color:#b4007a;padding:2px 6px;border-radius:6px;border:1px solid #e0e5f2}
+  pre{background:var(--code-bg);border-radius:12px;padding:18px 20px;overflow:auto;box-shadow:var(--shadow);border:1px solid #1b2434;margin:16px 0}
+  pre code{background:none;color:#e6edf3;border:none;padding:0;font-size:14px;line-height:1.6}
+  .codewrap{margin:16px 0}
+  .codewrap .cap{font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:600}
+  .box{border-radius:12px;padding:15px 20px;margin:18px 0;border-left:5px solid;background:#fff;box-shadow:var(--shadow)}
+  .box .t{font-weight:800;font-size:13.5px;letter-spacing:.03em;text-transform:uppercase;margin-bottom:5px;display:block}
+  .box p:first-of-type{margin-top:0}.box p:last-child{margin-bottom:0}
+  .tip{border-color:var(--tip)} .tip .t{color:var(--tip)}
+  .warn{border-color:var(--warn)} .warn .t{color:var(--warn)}
+  .gold{border-color:var(--gold);background:linear-gradient(180deg,#fffdf5,#fff)} .gold .t{color:var(--gold)}
+  .note{border-color:var(--note)} .note .t{color:var(--note)}
+  .danger{border-color:#dc2626} .danger .t{color:#dc2626}
+  table{border-collapse:collapse;width:100%;margin:18px 0;font-size:15px;background:#fff;box-shadow:var(--shadow);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#eef1fa;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:#38405a}
+  tr:last-child td{border-bottom:none}
+  .qa{border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);padding:4px 22px;margin:18px 0}
+  .qa .q{font-weight:800;color:var(--brand)}
+  footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+  @media(max-width:960px){
+    .layout{grid-template-columns:1fr}
+    aside{position:static;height:auto;border-right:none;border-bottom:1px solid var(--line)}
+    main{padding:24px 16px 70px}
+    .hero{padding:26px 22px}.hero h1{font-size:24px}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <div class="brandsmall">ORM · EF Core</div>
+    <h2>Вопрос 3. EF Core при смене провайдера</h2>
+    <nav>
+      <a href="index.html">← Все вопросы</a>
+      <a href="#q3-provider">Что меняется при смене провайдера</a>
+      <a href="#q3-linq">LINQ → SQL: что ломается</a>
+      <a href="#q3-paging">Пагинация Skip/Take</a>
+      <a href="#q3-types">Типы: GUID, bool, даты</a>
+      <a href="#q3-casts">Неявные приведения и индексы</a>
+      <a href="#q3-check">Чек-лист проверки</a>
+      <a href="#q3-answer">Готовый ответ</a>
+    </nav>
+  </aside>
+  <main>
+  <article>
+    <div class="topnav">
+      <a href="index.html">← Все вопросы</a><span>·</span><a href="q2-di-lifetimes.html">Вопрос 2</a><span>·</span><strong>Вопрос 3: EF Core</strong><span>·</span><a href="q4-transactions-pool.html">Вопрос 4</a>
+    </div>
+    <div class="hero" style="background:linear-gradient(135deg,#4f46e5,#0891b2)">
+      <div class="kicker">Подготовка к собеседованию · ORM и миграция</div>
+      <h1>EF Core: перенос с Oracle на PostgreSQL</h1>
+      <p>Что меняется при смене провайдера, где перестаёт работать трансляция LINQ, как ведут себя Skip/Take
+         и GUID/UUID — и почему неявные приведения типов «убивают» индексы.</p>
+      <div class="meta">Алексей Грознов · EF Core, Oracle → PostgreSQL, высоконагруженный backend</div>
+    </div>
+
+    <section id="q3-provider">
+      <h2>Вопрос 3. Что вообще меняется при смене провайдера</h2>
+      <p>EF Core сам SQL не пишет — он <strong>транслирует</strong> LINQ в запрос средствами провайдера.
+        Поэтому при переезде с Oracle на PostgreSQL меняется не модель, а <strong>диалект</strong>: пакет
+        провайдера, трансляция выражений, типы параметров и поведение по краям.</p>
+      <table>
+        <thead><tr><th>Область</th><th>Oracle (<code>Oracle.EntityFrameworkCore</code>)</th><th>PostgreSQL (<code>Npgsql.EntityFrameworkCore.PostgreSQL</code>)</th></tr></thead>
+        <tbody>
+          <tr><td>Пагинация</td><td><code>ROW_NUMBER()</code> / <code>OFFSET … FETCH</code></td><td><code>LIMIT … OFFSET</code></td></tr>
+          <tr><td>Логический тип</td><td><code>NUMBER(1)</code></td><td>настоящий <code>boolean</code></td></tr>
+          <tr><td>GUID</td><td><code>RAW(16)</code>, <code>SYS_GUID()</code></td><td><code>uuid</code>, <code>gen_random_uuid()</code></td></tr>
+          <tr><td>Строки</td><td><code>VARCHAR2</code>, пустая строка = <code>NULL</code></td><td><code>varchar(n)</code>/<code>text</code>, <code>''</code> и <code>NULL</code> — разные значения</td></tr>
+          <tr><td>Регистр имён</td><td>без кавычек — ВЕРХНИЙ регистр</td><td>без кавычек — нижний регистр</td></tr>
+          <tr><td>Дата-время</td><td><code>DATE</code> уже содержит время; <code>TIMESTAMP</code></td><td><code>timestamp</code> и <code>timestamptz</code> — разные типы</td></tr>
+        </tbody>
+      </table>
+      <div class="box note">
+        <span class="t">Как это формулировать на интервью</span>
+        <p>«Провайдер — часть ORM. Он переводит LINQ в конкретный диалект и определяет, какие типы CLR во что
+          отображаются. Поэтому после смены провайдера я не верю, что «тот же LINQ даст тот же план»: смотрю
+          сгенерированный SQL и план в самой СУБД».</p>
+      </div>
+    </section>
+    <section id="q3-linq">
+      <h2>LINQ → SQL: что перестаёт работать</h2>
+      <p>Проблема не в LINQ, а в том, что <strong>часть выражений транслируется, а часть — нет</strong>.
+        Что не удалось перевести в SQL, EF Core либо выполнит <em>на клиенте</em> (тихо и медленно), либо
+        бросит исключение — в зависимости от версии и формы запроса.</p>
+      <div class="codewrap">
+        <p class="cap">Типичные грабли после смены провайдера</p>
+        <pre><code class="language-csharp">// ✘ 1) Оракульный SQL, оставшийся в коде через FromSqlRaw: в PG такого диалекта нет
+var rows = await db.Orders
+    .FromSqlRaw("SELECT * FROM orders WHERE NVL(status,'NEW') = 'NEW' AND ROWNUM &lt;= 100")
+    .ToListAsync();
+// на PostgreSQL это COALESCE(status,'NEW') и LIMIT 100
+
+// ✘ 2) Отсечение по дате через свойство .Date/.Year — не индексируется и мешает pruning
+var jan = await db.Orders.Where(o =&gt; o.CreatedAt.Date == day).ToListAsync();
+
+// ✔ 3) Границы диапазона вместо функции по колонке
+var from = day.Date;                    // 00:00
+var to   = from.AddDays(1);             // 00:00 следующего дня
+var janOk = await db.Orders
+    .Where(o =&gt; o.CreatedAt &gt;= from &amp;&amp; o.CreatedAt &lt; to)
+    .ToListAsync();</code></pre>
+      </div>
+      <ul>
+        <li><strong>Проверяйте SQL, а не догадывайтесь:</strong> <code>query.ToQueryString()</code> показывает,
+          что уйдёт в базу, — до выполнения запроса.</li>
+        <li><strong>Настройте логи Npgsql</strong> (<code>LogTo</code>, <code>EnableSensitiveDataLogging</code>
+          только в dev) — видно и SQL, и типы параметров.</li>
+        <li><strong>Никаких «клиентских» вычислений</strong> в середине цепочки: <code>ToList()</code> до
+          <code>Where</code> тащит всю таблицу в память.</li>
+      </ul>
+    </section>
+
+    <section id="q3-paging">
+      <h2>Пагинация <code>Skip</code>/<code>Take</code></h2>
+      <p>Синтаксис в LINQ не меняется, но уходит в разный SQL:</p>
+      <div class="codewrap">
+        <pre><code class="language-sql">-- Oracle
+SELECT * FROM (
+  SELECT o.*, ROW_NUMBER() OVER (ORDER BY created_at) rn FROM orders o
+) WHERE rn BETWEEN 41 AND 60;
+
+-- PostgreSQL
+SELECT * FROM orders ORDER BY created_at LIMIT 20 OFFSET 40;</code></pre>
+      </div>
+      <ul>
+        <li><strong>Без <code>ORDER BY</code> страница «плавает»:</strong> порядок строк в PG не определён, и
+          клиент может увидеть одну и ту же запись дважды. Сортировка по <em>уникальному</em> ключу обязательна:
+          <code>OrderBy(x =&gt; x.CreatedAt).ThenBy(x =&gt; x.Id)</code>.</li>
+        <li><strong><code>OFFSET</code> дорогой:</strong> база честно читает и выбрасывает <code>OFFSET</code>
+          строк, поэтому «глубокие» страницы (offset 100 000) замедляются.</li>
+        <li><strong>Правильное решение — keyset-пагинация</strong> («по курсору»): вместо номера страницы
+          передаём последний увиденный ключ.</li>
+      </ul>
+      <div class="codewrap">
+        <pre><code class="language-csharp">// keyset-пагинация: WHERE (created_at, id) &lt; (:lastAt, :lastId) ORDER BY created_at DESC, id DESC LIMIT 20
+public Task&lt;List&lt;Order&gt;&gt; NextPage(DateTime lastAt, Guid lastId) =&gt;
+    db.Orders
+      .Where(o =&gt; o.CreatedAt &lt; lastAt || (o.CreatedAt == lastAt &amp;&amp; o.Id.CompareTo(lastId) &lt; 0))
+      .OrderByDescending(o =&gt; o.CreatedAt).ThenByDescending(o =&gt; o.Id)
+      .Take(20)
+      .ToListAsync();</code></pre>
+      </div>
+      <p>Работает O(1) по индексу <code>(created_at DESC, id DESC)</code> независимо от глубины — и одинаково
+        хорошо на Oracle и на PostgreSQL.</p>
+    </section>
+    <section id="q3-types">
+      <h2>Типы: GUID/UUID, boolean, даты</h2>
+      <table>
+        <thead><tr><th>CLR</th><th>Oracle</th><th>PostgreSQL (Npgsql)</th><th>Что может пойти не так</th></tr></thead>
+        <tbody>
+          <tr><td><code>Guid</code></td><td><code>RAW(16)</code></td><td><code>uuid</code></td><td>Если в PG колонка объявлена как <code>text</code>, сравнение с <code>uuid</code> требует приведения</td></tr>
+          <tr><td><code>bool</code></td><td><code>NUMBER(1)</code></td><td><code>boolean</code></td><td>Старые данные с <code>0/1</code> и <code>'Y'/'N'</code> требуют конвертации в миграции</td></tr>
+          <tr><td><code>DateTime</code></td><td><code>DATE</code> (со временем)</td><td><code>timestamp</code> / <code>timestamptz</code></td><td><code>timestamptz</code> + <code>Kind=Unspecified</code> → сдвиг времени</td></tr>
+          <tr><td><code>string</code></td><td><code>VARCHAR2</code></td><td><code>varchar(n)</code> / <code>text</code></td><td>Пустая строка: в Oracle <code>''</code> = <code>NULL</code>, в PG это разные значения</td></tr>
+          <tr><td><code>decimal</code></td><td><code>NUMBER(p,s)</code></td><td><code>numeric(p,s)</code></td><td>Другая точность по умолчанию меняет округление</td></tr>
+        </tbody>
+      </table>
+      <p>Соответствие типов задают <em>явно</em> — иначе провайдер выберет сам, а «сам» не всегда совпадёт с тем,
+        что уже лежит в существующей таблице:</p>
+      <div class="codewrap">
+        <pre><code class="language-csharp">protected override void OnModelCreating(ModelBuilder b)
+{
+    b.Entity&lt;Order&gt;(e =&gt;
+    {
+        e.Property(x =&gt; x.Id).HasColumnType("uuid");
+        e.Property(x =&gt; x.CreatedAt).HasColumnType("timestamptz");   // время с часовым поясом
+        e.Property(x =&gt; x.Total).HasPrecision(18, 2);          // numeric(18,2)
+        e.Property(x =&gt; x.Status).HasColumnType("varchar(32)");
+        e.Property(x =&gt; x.Kind).HasConversion&lt;string&gt;();       // enum как строка
+    });
+}</code></pre>
+      </div>
+      <p>Для <code>timestamptz</code> в .NET всегда храните время в UTC (<code>DateTime.UtcNow</code>, а не
+        <code>Now</code>) — иначе один и тот же момент «поедет» при смене таймзоны сервера.</p>
+    </section>
+
+    <section id="q3-casts">
+      <h2>Неявные приведения типов и почему падают индексы</h2>
+      <p>Это главный практический риск при миграции. Индекс в PostgreSQL работает, когда <strong>тип параметра
+        совпадает с типом колонки</strong>. Если запрос приводит колонку к другому типу, планировщик не может
+        применить индекс — и делает <code>Seq Scan</code> по всей таблице.</p>
+      <div class="codewrap">
+        <pre><code class="language-sql">-- колонка user_id имеет тип uuid, а параметр приходит как text
+SELECT * FROM orders WHERE user_id = $1::text;   -- ✘ Seq Scan: индекс не применим
+SELECT * FROM orders WHERE user_id = $1;         -- ✔ Index Scan: типы совпали</code></pre>
+      </div>
+      <ul>
+        <li><strong>Откуда берётся <code>text</code>:</strong> в метод пришла <code>string</code> вместо
+          <code>Guid</code>; параметр добавлен без типа; <code>FromSqlRaw</code> с интерполяцией значений.</li>
+        <li><strong>Функции по колонке</strong> работают так же: <code>WHERE upper(email) = …</code> не
+          использует индекс по <code>email</code>. Для такого условия нужен <em>функциональный</em> индекс
+          <code>CREATE INDEX … ON users (lower(email))</code> — и условие в запросе должно выглядеть точно так же.</li>
+      </ul>
+      <div class="box warn">
+        <span class="t">Как поймать проблему, а не надеяться</span>
+        <ul>
+          <li><strong><code>ToQueryString()</code></strong> — увидеть, что уходит в базу, до выполнения.</li>
+          <li><strong><code>EXPLAIN (ANALYZE, BUFFERS)</code></strong> — <code>Seq Scan</code> там, где ждали
+            <code>Index Scan</code>, плюс строка <code>Filter</code> с приведением.</li>
+          <li><strong><code>pg_stat_statements</code></strong> — какие запросы реально дорогие.</li>
+          <li><strong>Типизированные параметры:</strong> <code>Guid</code>/<code>DateTime</code> вместо строк,
+            а в raw SQL — <code>NpgsqlParameter</code> с явным <code>NpgsqlDbType</code>.</li>
+        </ul>
+      </div>
+    </section>
+    <section id="q3-check">
+      <h2>Чек-лист проверки после смены провайдера</h2>
+      <ol>
+        <li>Сменить пакет провайдера и <code>UseOracle</code> → <code>UseNpgsql</code>; проверить, что миграции
+          собирают ту же схему.</li>
+        <li>Прогнать тесты <strong>с логированием SQL</strong>: ищем клиентскую оценку, лишние «N+1» и неожиданные
+          приведения.</li>
+        <li>На горячих запросах снять <code>EXPLAIN (ANALYZE, BUFFERS)</code> и убедиться, что индексы работают.</li>
+        <li>Сверить типы схемы и модели: <code>uuid</code>, <code>boolean</code>, <code>timestamptz</code>,
+          точность <code>numeric</code>.</li>
+        <li>Проверить логику, где «пустая строка = NULL» была нормой (в Oracle) и перестала ею быть в PG.</li>
+        <li>Перевести глубокую пагинацию на keyset.</li>
+      </ol>
+    </section>
+
+    <section id="q3-answer">
+      <h2>Готовый ответ</h2>
+      <div class="qa">
+        <p class="q">Да, сталкивался: EF Core — это LINQ, а SQL пишет провайдер.</p>
+        <p>«При переносе с Oracle на PostgreSQL я в первую очередь перестроил ожидания: меняются не запросы в
+          коде, а <strong>трансляция</strong> в SQL. Поэтому каждый горячий запрос я проверял через
+          <code>ToQueryString()</code> и <code>EXPLAIN</code>: после смены диалекта часть выражений перестаёт
+          переводиться в SQL и начинает выполняться на клиенте.»</p>
+      </div>
+      <div class="qa">
+        <p class="q">Что нашёл конкретно.</p>
+        <p>«Пагинация: <code>Skip/Take</code> без сортировки по уникальному ключу давала «плавающие» страницы и
+          дубликаты — перевёл глубокие страницы на <strong>keyset-пагинацию</strong> по
+          <code>(created_at, id)</code>. Типы: привёл модель к нативным типам PG — <code>uuid</code>,
+          <code>boolean</code>, <code>timestamptz</code>, <code>numeric(18,2)</code> вместо оракульных
+          <code>RAW(16)</code> и <code>NUMBER(1)</code>. И отдельно вычистил места, где в Oracle <code>''</code>
+          означала то же, что <code>NULL</code>: в PostgreSQL это разные значения, а логика фильтров на этом
+          держалась.»</p>
+      </div>
+      <div class="qa">
+        <p class="q">Про неявные приведения и индексы.</p>
+        <p>«Самая неприятная находка — <strong>приведения типов</strong>. Если колонка <code>uuid</code>, а
+          параметр приходит как <code>text</code>, PostgreSQL сравнивает преобразованные значения, индекс
+          становится неприменим — и в плане появляется <code>Seq Scan</code>. То же с функциями по колонке:
+          <code>where upper(email)</code> не использует индекс по <code>email</code>, для него нужен
+          функциональный индекс по <code>lower(email)</code>. Рецепт: передавать типизированные параметры
+          (<code>Guid</code>, а не <code>string</code>), в raw SQL задавать <code>NpgsqlDbType</code>, а условие
+          писать ровно так, как объявлен индекс. И проверять это по плану, а не на глаз.»</p>
+      </div>
+    </section>
+    <footer>
+      <p><a href="index.html">← Все вопросы</a> · <a href="q4-transactions-pool.html">Вопрос 4: транзакции и пул соединений</a></p>
+    </footer>
+  </article>
+  </main>
+</div>
+<script>if (window.hljs) hljs.highlightAll();</script>
+</body>
+</html>

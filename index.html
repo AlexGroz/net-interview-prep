@@ -50,24 +50,59 @@
       <span class="go">Читать →</span>
     </a>
 
-    <a class="card" href="q3-sql-explain.html">
-      <div class="num">Вопрос 3 · SQL</div>
+    <a class="card" href="q3-ef-core-providers.html">
+      <div class="num">Вопрос 3 · ORM</div>
+      <h2>EF Core при переносе Oracle → PostgreSQL</h2>
+      <p>Смена провайдера, трансляция LINQ, Skip/Take, GUID/UUID и неявные приведения, ломающие индексы.</p>
+      <span class="go">Читать →</span>
+    </a>
+
+    <a class="card" href="q4-transactions-pool.html">
+      <div class="num">Вопрос 4 · Транзакции</div>
+      <h2>Гибридные транзакции, ресурсы и пул соединений</h2>
+      <p>Транзакция с внешними вызовами внутри: пул, idle in transaction, блокировки и как их не словить.</p>
+      <span class="go">Читать →</span>
+    </a>
+
+    <a class="card" href="q5-sql-explain.html">
+      <div class="num">Вопрос 5 · SQL</div>
       <h2>Оптимизация медленного запроса в PostgreSQL</h2>
       <p>Шаги диагностики, что искать в EXPLAIN (ANALYZE, BUFFERS), типы соединений и готовый ответ.</p>
       <span class="go">Читать →</span>
     </a>
 
-    <a class="card" href="q4-oracle-to-postgres.html">
-      <div class="num">Вопрос 4 · SQL</div>
+    <a class="card" href="q6-oracle-to-postgres.html">
+      <div class="num">Вопрос 6 · SQL</div>
       <h2>Миграция Oracle → PostgreSQL</h2>
       <p>MVCC и блокировки в двух СУБД, конвертация PACKAGE / автономных транзакций / NULL и план миграции.</p>
       <span class="go">Читать →</span>
     </a>
 
-    <a class="card" href="q5-integration-api.html">
-      <div class="num">Вопрос 5 · Интеграция</div>
+    <a class="card" href="q7-bloat-hot.html">
+      <div class="num">Вопрос 7 · PostgreSQL</div>
+      <h2>Bloat, HOT-апдейты и fillfactor</h2>
+      <p>Почему таблицы и индексы раздуваются, как работают Heap-Only Tuples и что зависит от .NET-кода.</p>
+      <span class="go">Читать →</span>
+    </a>
+
+    <a class="card" href="q8-partitioning.html">
+      <div class="num">Вопрос 8 · PostgreSQL</div>
+      <h2>Секционирование и partition pruning</h2>
+      <p>Range / List / Hash, отсечение секций и ошибки LINQ, из-за которых читаются все секции.</p>
+      <span class="go">Читать →</span>
+    </a>
+
+    <a class="card" href="q9-integration-api.html">
+      <div class="num">Вопрос 9 · Интеграция</div>
       <h2>REST, gRPC, брокеры и валидация входных данных</h2>
       <p>Что когда выбирать для обмена между сервисами и как организовать валидацию в ASP.NET Core.</p>
+      <span class="go">Читать →</span>
+    </a>
+
+    <a class="card" href="q10-outbox-resilience.html">
+      <div class="num">Вопрос 10 · Надёжность</div>
+      <h2>Transactional Outbox и паттерны отказоустойчивости</h2>
+      <p>Retry, circuit breaker и rate limiting — и как гарантировать, что событие уйдёт строго после коммита.</p>
       <span class="go">Читать →</span>
     </a>
 

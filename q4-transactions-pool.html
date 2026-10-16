@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вопрос 4 · Транзакции, ресурсы и пул соединений</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css">
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/csharp.min.js"></script>
+<style>
+  :root{
+    --bg:#f7f8fb; --ink:#1c2230; --muted:#5a6478; --line:#e3e7f0;
+    --brand:#4f46e5; --tip:#0f9d58; --warn:#d97706; --gold:#b45309; --note:#2563eb;
+    --code-bg:#0d1117; --shadow:0 10px 30px rgba(20,28,60,.08);
+    --mono:"JetBrains Mono","Fira Code",ui-monospace,Menlo,Consolas,monospace;
+    --sans:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.7;-webkit-font-smoothing:antialiased}
+  .layout{display:grid;grid-template-columns:280px minmax(0,1fr);max-width:1280px;margin:0 auto}
+  aside{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:28px 20px 60px;border-right:1px solid var(--line);background:linear-gradient(180deg,#fff,#f4f6fc)}
+  aside .brandsmall{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--brand);font-weight:700}
+  aside h2{font-size:16px;margin:6px 0 18px;line-height:1.35}
+  aside nav a{display:block;color:var(--muted);text-decoration:none;font-size:14.5px;padding:7px 12px;border-radius:9px;transition:.15s}
+  aside nav a:hover{background:#eef1fa;color:var(--ink)}
+  main{padding:44px 54px 110px}
+  article{max-width:860px;margin:0 auto}
+  .hero{background:linear-gradient(135deg,#4f46e5,#0ea5e9);color:#fff;border-radius:14px;padding:36px 40px;box-shadow:var(--shadow);margin-bottom:36px}
+  .hero .kicker{font-size:12.5px;text-transform:uppercase;letter-spacing:.16em;opacity:.9;font-weight:700}
+  .hero h1{font-size:30px;line-height:1.2;margin:12px 0;font-weight:800}
+  .hero p{margin:0;font-size:17px;opacity:.96;max-width:60ch}
+  .hero .meta{margin-top:18px;font-size:13.5px;opacity:.9;border-top:1px solid rgba(255,255,255,.3);padding-top:12px}
+  .topnav{margin:0 0 18px;font-size:14.5px;color:var(--muted)}
+  .topnav a{text-decoration:none;font-weight:600}
+  .topnav span{margin:0 9px;color:#c3cad9}
+  h2{font-size:25px;margin:52px 0 14px;padding-bottom:10px;border-bottom:2px solid var(--line)}
+  h3{font-size:19px;margin:30px 0 8px}
+  p{margin:12px 0}
+  ul,ol{margin:12px 0;padding-left:24px}
+  li{margin:6px 0}
+  strong{color:#111726}
+  code{font-family:var(--mono);font-size:.9em;background:#eef1f8;color:#b4007a;padding:2px 6px;border-radius:6px;border:1px solid #e0e5f2}
+  pre{background:var(--code-bg);border-radius:12px;padding:18px 20px;overflow:auto;box-shadow:var(--shadow);border:1px solid #1b2434;margin:16px 0}
+  pre code{background:none;color:#e6edf3;border:none;padding:0;font-size:14px;line-height:1.6}
+  .codewrap{margin:16px 0}
+  .codewrap .cap{font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:600}
+  .box{border-radius:12px;padding:15px 20px;margin:18px 0;border-left:5px solid;background:#fff;box-shadow:var(--shadow)}
+  .box .t{font-weight:800;font-size:13.5px;letter-spacing:.03em;text-transform:uppercase;margin-bottom:5px;display:block}
+  .box p:first-of-type{margin-top:0}.box p:last-child{margin-bottom:0}
+  .tip{border-color:var(--tip)} .tip .t{color:var(--tip)}
+  .warn{border-color:var(--warn)} .warn .t{color:var(--warn)}
+  .gold{border-color:var(--gold);background:linear-gradient(180deg,#fffdf5,#fff)} .gold .t{color:var(--gold)}
+  .note{border-color:var(--note)} .note .t{color:var(--note)}
+  .danger{border-color:#dc2626} .danger .t{color:#dc2626}
+  table{border-collapse:collapse;width:100%;margin:18px 0;font-size:15px;background:#fff;box-shadow:var(--shadow);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#eef1fa;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:#38405a}
+  tr:last-child td{border-bottom:none}
+  .qa{border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);padding:4px 22px;margin:18px 0}
+  .qa .q{font-weight:800;color:var(--brand)}
+  footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+  @media(max-width:960px){
+    .layout{grid-template-columns:1fr}
+    aside{position:static;height:auto;border-right:none;border-bottom:1px solid var(--line)}
+    main{padding:24px 16px 70px}
+    .hero{padding:26px 22px}.hero h1{font-size:24px}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <div class="brandsmall">.NET + СУБД · Транзакции</div>
+    <h2>Вопрос 4. Транзакции и ресурсы</h2>
+    <nav>
+      <a href="index.html">← Все вопросы</a>
+      <a href="#q4-tx">Как устроена транзакция в .NET</a>
+      <a href="#q4-problems">Что ломается под нагрузкой</a>
+      <a href="#q4-right">Как правильно структурировать</a>
+      <a href="#q4-monitor">Что смотреть в мониторинге</a>
+      <a href="#q4-answer">Готовый ответ</a>
+    </nav>
+  </aside>
+  <main>
+  <article>
+    <div class="topnav">
+      <a href="index.html">← Все вопросы</a><span>·</span><a href="q3-ef-core-providers.html">Вопрос 3</a><span>·</span><strong>Вопрос 4: транзакции и пул</strong><span>·</span><a href="q5-sql-explain.html">Вопрос 5</a>
+    </div>
+    <div class="hero" style="background:linear-gradient(135deg,#b45309,#0891b2)">
+      <div class="kicker">Подготовка к собеседованию · .NET + СУБД</div>
+      <h1>Гибридные транзакции: соединение, пул и блокировки</h1>
+      <p>Почему транзакция с вызовом внешнего сервиса внутри — это бомба под пул соединений, что происходит
+         с блокировками в PostgreSQL и как удерживать соединение минимальное время.</p>
+      <div class="meta">Алексей Грознов · серверная логика на .NET, PostgreSQL, высокие нагрузки</div>
+    </div>
+
+    <section id="q4-tx">
+      <h2>Как устроена транзакция в .NET</h2>
+      <p>В EF Core есть два способа начать транзакцию — оба держат <strong>одно соединение</strong> к БД, пока
+        транзакция не завершена:</p>
+      <div class="codewrap">
+        <pre><code class="language-csharp">// 1) явная транзакция у DbContext
+await using var tx = await db.Database.BeginTransactionAsync(ct);
+try
+{
+    db.Orders.Add(order);
+    await db.SaveChangesAsync(ct);
+    await tx.CommitAsync(ct);
+}
+catch
+{
+    await tx.RollbackAsync(ct);
+    throw;
+}
+
+// 2) амбиентная транзакция (охватывает несколько DbContext / вызовов)
+using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);</code></pre>
+      </div>
+      <div class="box tip">
+        <span class="t">Главная мысль</span>
+        <p>Транзакция в .NET — это <strong>арендованное соединение из пула + снимок/блокировки в СУБД</strong>.
+          Чем дольше она открыта, тем дольше заняты <em>оба</em> ресурса. Всё остальное — следствия.</p>
+      </div>
+    </section>
+    <section id="q4-problems">
+      <h2>Что ломается под нагрузкой</h2>
+      <p>Опасный код выглядит безобидно: транзакция открыта «чтобы всё было атомарно», а внутри — обращения
+        к другим сервисам:</p>
+      <div class="codewrap">
+        <pre><code class="language-csharp">// ✘ соединение занято всё время транзакции, включая сетевые ожидания
+await using var tx = await db.Database.BeginTransactionAsync(ct);
+
+db.Orders.Add(order);
+await db.SaveChangesAsync(ct);
+
+await _paymentClient.ChargeAsync(order.Id, ct);      // 300 мс … 3 с по сети
+await _notifier.SendAsync(order.Id, ct);             // ещё 200 мс
+
+await tx.CommitAsync(ct);</code></pre>
+      </div>
+      <table>
+        <thead><tr><th>Что происходит</th><th>Чем это грозит</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Соединение занято</strong> всё время транзакции</td><td>Пул исчерпывается: остальные запросы ждут в очереди, получают <code>Timeout expired … obtaining a connection</code>, сервис «встаёт» целиком</td></tr>
+          <tr><td>В PostgreSQL висит <strong><code>idle in transaction</code></strong></td><td>Соединение ничего не делает, но держит снимок: <em>autovacuum не может убрать мёртвые версии</em> → растёт bloat (вопрос 7)</td></tr>
+          <tr><td><strong>Блокировки строк</strong> держатся до коммита</td><td>Другие транзакции по тем же строкам ждут → рост задержки, при разном порядке захвата — <code>deadlock detected</code></td></tr>
+          <tr><td>Внешний вызов <strong>уже сделан</strong>, а коммит упал</td><td>Несогласованность: платёж прошёл, заказ не сохранён. Транзакция БД тут не защищает</td></tr>
+          <tr><td><code>TransactionScope</code> + асинхронные вызовы</td><td>При подключении второго ресурса — попытка двухфазного коммита (DTC), что в контейнерах и облаке часто просто не работает</td></tr>
+        </tbody>
+      </table>
+      <div class="box danger">
+        <span class="t">Ключевая мысль</span>
+        <p>Транзакция БД не делает «атомарным» вызов внешнего сервиса. Она лишь <strong>удерживает соединение и
+          блокировки</strong> — то есть переносит проблему согласованности внутрь базы, попутно создавая проблему
+          с ресурсами.</p>
+      </div>
+    </section>
+
+    <section id="q4-right">
+      <h2>Как правильно структурировать код</h2>
+      <p>Правило, которое стоит произнести на интервью: <strong>транзакция охватывает только работу с БД</strong>.
+        Всё, что можно сделать до неё, делается до; всё, что можно отправить после, отправляется после —
+        но надёжно (это и есть Transactional Outbox, вопрос 10).</p>
+      <div class="codewrap">
+        <pre><code class="language-csharp">// ✔ 1. Подготовка — вне транзакции
+Validate(order);
+var total = await _pricing.CalculateAsync(order, ct);   // расчёты, внешние чтения
+order.Total = total;
+
+// ✔ 2. Короткая транзакция: только запись
+await using var tx = await db.Database.BeginTransactionAsync(ct);
+db.Orders.Add(order);
+db.Outbox.Add(OutboxMessage.For(order));                 // событие — в ту же транзакцию
+await db.SaveChangesAsync(ct);
+await tx.CommitAsync(ct);
+
+// ✔ 3. Побочные действия — после коммита, асинхронно и с повторами
+await _bus.PublishPendingAsync(ct);                      // отправляет то, что в outbox</code></pre>
+      </div>
+      <ul>
+        <li><strong>Держите транзакцию короткой:</strong> чем меньше миллисекунд между
+          <code>BeginTransaction</code> и <code>Commit</code>, тем меньше занятых соединений и блокировок.</li>
+        <li><strong>Оптимистичный параллелизм</strong> вместо длинных блокировок: версия строки
+          (<code>xmin</code> в PG, <code>rowversion</code> в EF Core) + повтор при конфликте. Читатели и
+          писатели не ждут друг друга.</li>
+        <li><strong>Атомарные команды вместо «прочитал-изменил-записал»:</strong>
+          <code>UPDATE … SET qty = qty - 1 WHERE id = :id AND qty &gt; 0</code> или
+          <code>INSERT … ON CONFLICT</code> — одна команда, одна короткая блокировка.</li>
+        <li><strong><code>SELECT … FOR UPDATE</code></strong> — только когда реально нужна пессимистичная
+          блокировка, и только на <em>конкретные</em> строки (не на всю таблицу).</li>
+        <li><strong>Защитные таймауты:</strong> <code>SET LOCAL lock_timeout = '2s'</code>,
+          <code>statement_timeout</code>, а на стороне PG — <code>idle_in_transaction_session_timeout</code>,
+          чтобы «залипшая» транзакция убивалась сама.</li>
+        <li><strong>Повтор при ошибках сериализации:</strong> коды <code>40001</code>
+          (<code>serialization_failure</code>) и <code>40P01</code> (<code>deadlock_detected</code>) — это
+          нормальные «повтори ещё раз», их обрабатывают ретраем, а не падением запроса.</li>
+      </ul>
+      <div class="box warn">
+        <span class="t">Ограничение, о котором надо сказать</span>
+        <p>Если данные лежат в <strong>двух</strong> системах (БД + брокер, или две БД), «настоящей» транзакции
+          между ними нет. Вместо двухфазного коммита используют <strong>компенсации и outbox</strong>: в одной
+          транзакции меняем состояние и пишем событие, а отправляем его отдельным воркером.</p>
+      </div>
+    </section>
+    <section id="q4-monitor">
+      <h2>Что смотреть в мониторинге</h2>
+      <p>Проблему с длинными транзакциями видно <strong>в самой СУБД</strong>, а не только в .NET:</p>
+      <div class="codewrap">
+        <pre><code class="language-sql">-- транзакции, которые ничего не делают, но держат снимок и блокировки
+SELECT pid, state, now() - state_change AS idle_for,
+       now() - xact_start          AS xact_age,
+       left(query, 60)             AS last_query
+FROM pg_stat_activity
+WHERE state = 'idle in transaction'
+ORDER BY xact_age DESC;
+
+-- кто кого блокирует прямо сейчас
+SELECT blocked.pid AS blocked_pid, blocked.query AS blocked_query,
+       blocking.pid AS blocking_pid, blocking.query AS blocking_query
+FROM pg_stat_activity blocked
+JOIN pg_locks bl ON bl.pid = blocked.pid AND NOT bl.granted
+JOIN pg_locks kl ON kl.locktype = bl.locktype
+                AND kl.relation IS NOT DISTINCT FROM bl.relation
+                AND kl.granted
+JOIN pg_stat_activity blocking ON blocking.pid = kl.pid
+WHERE blocked.pid &lt;&gt; blocking.pid;</code></pre>
+      </div>
+      <ul>
+        <li><strong>Соединения к БД:</strong> в Npgsql пул ограничен <code>Max Pool Size</code> (по умолчанию
+          100). Считайте бюджет: <em>Max Pool Size × число инстансов ≤ max_connections − запас</em> для
+          администрирования и реплик. Иначе инстансы «съедят» лимит сервера.</li>
+        <li><strong>Метрики пула:</strong> <code>db.client.connections.usage</code> (Npgsql отдаёт их через
+          <code>ActivitySource</code>/<code>EventCounters</code>): сколько свободных, сколько занято, сколько
+          запросов ждут.</li>
+        <li><strong>Признак в логах:</strong> <code>Timeout expired. The timeout period elapsed prior to obtaining
+          a connection from the pool</code> — почти всегда это не «мало соединений», а «слишком долго держим».</li>
+        <li><strong>Защита на стороне сервера:</strong> <code>idle_in_transaction_session_timeout</code>
+          (например, 30–60 с) — база сама прибьёт «залипшую» транзакцию, и её будет видно в логах
+          как <code>FATAL: terminating connection due to idle-in-transaction timeout</code>.</li>
+      </ul>
+    </section>
+
+    <section id="q4-answer">
+      <h2>Готовый ответ</h2>
+      <div class="qa">
+        <p class="q">Как вы управляете транзакциями в .NET при сложной логике?</p>
+        <p>«Транзакция у меня охватывает <strong>только работу с БД</strong>. Всё, что требует сети — расчёты,
+          обращения к внешним сервисам, отправку уведомлений — я выношу до или после транзакции. Внутри:
+          <code>BeginTransactionAsync</code>, изменения, <code>SaveChangesAsync</code>, <code>CommitAsync</code> —
+          миллисекунды, а не секунды. Если изменения затрагивают две системы, я не пытаюсь соединить их одной
+          транзакцией: пишу событие в <strong>outbox</strong> в той же транзакции, а доставку делает отдельный
+          воркер.»</p>
+      </div>
+      <div class="qa">
+        <p class="q">К каким проблемам приводит транзакция с внешними вызовами внутри?</p>
+        <p>«Первое — <strong>пул соединений</strong>: соединение занято всё время, включая сетевые ожидания, и при
+          нагрузке пул исчерпывается — остальные запросы падают с <em>pool timeout</em>. Второе — в PostgreSQL
+          такие транзакции висят как <code>idle in transaction</code>: они держат снимок, мешают autovacuum
+          убирать мёртвые версии (растёт bloat) и держат <strong>блокировки строк</strong> до самого коммита,
+          отсюда рост задержки и deadlock’и. Третье — согласованность всё равно не гарантируется: внешний сервис
+          уже всё сделал, а коммит может упасть. И если подключится второй транзакционный ресурс,
+          <code>TransactionScope</code> потянет двухфазный коммит, который в контейнерной среде обычно
+          недоступен.»</p>
+      </div>
+      <div class="qa">
+        <p class="q">Как минимизировать время удержания соединения?</p>
+        <p>«Четыре приёма. Первый — <strong>читать и считать вне транзакции</strong>, внутри только запись.
+          Второй — вместо «прочитал-изменил-записал» использовать <strong>одну атомарную команду</strong>
+          (<code>UPDATE … WHERE qty &gt; 0</code>, <code>INSERT … ON CONFLICT</code>) — блокировка строки живёт
+          микросекунды. Третий — <strong>оптимистичный параллелизм</strong> по версии строки вместо
+          пессимистичных блокировок, с повтором на <code>40001</code>/<code>40P01</code>. Четвёртый — защитные
+          таймауты: <code>lock_timeout</code> и <code>statement_timeout</code> на транзакцию плюс
+          <code>idle_in_transaction_session_timeout</code> на сервере. И обязательно смотрю
+          <code>pg_stat_activity</code> и метрики пула, чтобы это не оставалось теорией.»</p>
+      </div>
+    </section>
+    <footer>
+      <p><a href="index.html">← Все вопросы</a> · <a href="q5-sql-explain.html">Вопрос 5: оптимизация SQL</a></p>
+    </footer>
+  </article>
+  </main>
+</div>
+<script>if (window.hljs) hljs.highlightAll();</script>
+</body>
+</html>
