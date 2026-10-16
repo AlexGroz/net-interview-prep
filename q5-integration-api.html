@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вопрос 5 · Интеграция и API</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css">
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/csharp.min.js"></script>
+<style>
+  :root{
+    --bg:#f7f8fb; --ink:#1c2230; --muted:#5a6478; --line:#e3e7f0;
+    --brand:#4f46e5; --tip:#0f9d58; --warn:#d97706; --gold:#b45309; --note:#2563eb;
+    --code-bg:#0d1117; --shadow:0 10px 30px rgba(20,28,60,.08);
+    --mono:"JetBrains Mono","Fira Code",ui-monospace,Menlo,Consolas,monospace;
+    --sans:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.7;-webkit-font-smoothing:antialiased}
+  .layout{display:grid;grid-template-columns:280px minmax(0,1fr);max-width:1280px;margin:0 auto}
+  aside{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:28px 20px 60px;border-right:1px solid var(--line);background:linear-gradient(180deg,#fff,#f4f6fc)}
+  aside .brandsmall{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--brand);font-weight:700}
+  aside h2{font-size:16px;margin:6px 0 18px;line-height:1.35}
+  aside nav a{display:block;color:var(--muted);text-decoration:none;font-size:14.5px;padding:7px 12px;border-radius:9px;transition:.15s}
+  aside nav a:hover{background:#eef1fa;color:var(--ink)}
+  main{padding:44px 54px 110px}
+  article{max-width:860px;margin:0 auto}
+  .hero{background:linear-gradient(135deg,#4f46e5,#0ea5e9);color:#fff;border-radius:14px;padding:36px 40px;box-shadow:var(--shadow);margin-bottom:36px}
+  .hero .kicker{font-size:12.5px;text-transform:uppercase;letter-spacing:.16em;opacity:.9;font-weight:700}
+  .hero h1{font-size:30px;line-height:1.2;margin:12px 0;font-weight:800}
+  .hero p{margin:0;font-size:17px;opacity:.96;max-width:60ch}
+  .hero .meta{margin-top:18px;font-size:13.5px;opacity:.9;border-top:1px solid rgba(255,255,255,.3);padding-top:12px}
+  .topnav{margin:0 0 18px;font-size:14.5px;color:var(--muted)}
+  .topnav a{text-decoration:none;font-weight:600}
+  .topnav span{margin:0 9px;color:#c3cad9}
+  h2{font-size:25px;margin:52px 0 14px;padding-bottom:10px;border-bottom:2px solid var(--line)}
+  h3{font-size:19px;margin:30px 0 8px}
+  p{margin:12px 0}
+  ul,ol{margin:12px 0;padding-left:24px}
+  li{margin:6px 0}
+  strong{color:#111726}
+  code{font-family:var(--mono);font-size:.9em;background:#eef1f8;color:#b4007a;padding:2px 6px;border-radius:6px;border:1px solid #e0e5f2}
+  pre{background:var(--code-bg);border-radius:12px;padding:18px 20px;overflow:auto;box-shadow:var(--shadow);border:1px solid #1b2434;margin:16px 0}
+  pre code{background:none;color:#e6edf3;border:none;padding:0;font-size:14px;line-height:1.6}
+  .codewrap{margin:16px 0}
+  .codewrap .cap{font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:600}
+  .box{border-radius:12px;padding:15px 20px;margin:18px 0;border-left:5px solid;background:#fff;box-shadow:var(--shadow)}
+  .box .t{font-weight:800;font-size:13.5px;letter-spacing:.03em;text-transform:uppercase;margin-bottom:5px;display:block}
+  .box p:first-of-type{margin-top:0}.box p:last-child{margin-bottom:0}
+  .tip{border-color:var(--tip)} .tip .t{color:var(--tip)}
+  .warn{border-color:var(--warn)} .warn .t{color:var(--warn)}
+  .gold{border-color:var(--gold);background:linear-gradient(180deg,#fffdf5,#fff)} .gold .t{color:var(--gold)}
+  .note{border-color:var(--note)} .note .t{color:var(--note)}
+  .danger{border-color:#dc2626} .danger .t{color:#dc2626}
+  table{border-collapse:collapse;width:100%;margin:18px 0;font-size:15px;background:#fff;box-shadow:var(--shadow);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#eef1fa;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:#38405a}
+  tr:last-child td{border-bottom:none}
+  .qa{border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);padding:4px 22px;margin:18px 0}
+  .qa .q{font-weight:800;color:var(--brand)}
+  footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+  @media(max-width:960px){
+    .layout{grid-template-columns:1fr}
+    aside{position:static;height:auto;border-right:none;border-bottom:1px solid var(--line)}
+    main{padding:24px 16px 70px}
+    .hero{padding:26px 22px}.hero h1{font-size:24px}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <div class="brandsmall">Интеграция · API</div>
+    <h2>Вопрос 5. Интеграция и API</h2>
+    <nav>
+      <a href="index.html">← Все вопросы</a>
+      <a href="#q5">REST, gRPC и брокеры</a>
+      <a href="#q5-validation">Валидация входных данных</a>
+      <a href="#q5-answer">Готовый ответ</a>
+    </nav>
+  </aside>
+  <main>
+  <article>
+    <div class="topnav">
+      <a href="index.html">← Все вопросы</a><span>·</span><a href="q4-oracle-to-postgres.html">Вопрос 4</a><span>·</span><strong>Вопрос 5: интеграция и API</strong>
+    </div>
+    <div class="hero" style="background:linear-gradient(135deg,#7c3aed,#0891b2)">
+      <div class="kicker">Подготовка к собеседованию · Интеграция и API</div>
+      <h1>REST, gRPC, брокеры сообщений и валидация входных данных</h1>
+      <p>Когда остаться на REST, а когда перейти на gRPC или брокер сообщений — и как организовать валидацию
+         входящих данных в ASP.NET Core.</p>
+      <div class="meta">Алексей Грознов · проектирование API и интеграций (.NET Core / ASP.NET Core)</div>
+    </div>
+
+    <section id="q5">
+      <h2>Часть 1. REST vs gRPC vs брокеры сообщений</h2>
+      <p>REST с JSON удобен, но не бесплатен: текст <strong>сериализуется</strong> и занимает больше байт.
+        На одном запросе это незаметно, а между сервисами внутри системы вызовов — миллионы. Поэтому выбор
+        определяется задачей, а не «модой».</p>
+
+      <h3>REST — когда он правильный</h3>
+      <ul>
+        <li><strong>Кто клиент:</strong> браузер, мобильное приложение, <strong>внешняя система</strong>.</li>
+        <li><strong>Плюсы:</strong> читается и легко отлаживается (<code>curl</code>, Postman), работает везде,
+          штатное кэширование по HTTP, не нужна кодогенерация.</li>
+        <li><strong>Берём REST, когда:</strong> API публичный или интеграция с чужими системами; важны простота
+          и совместимость, а не экономия байтов.</li>
+      </ul>
+
+      <h3>gRPC — когда выигрывает</h3>
+      <ul>
+        <li><strong>Кто клиент:</strong> <strong>свои</strong> сервисы.</li>
+        <li><strong>Плюсы:</strong> бинарный <strong>Protobuf</strong> (компактнее и быстрее JSON),
+          <strong>HTTP/2</strong> (мультиплексирование в одном соединении), <strong>стриминг</strong>, строгий
+          контракт из <code>.proto</code> и кодогенерация клиентов.</li>
+        <li><strong>Ограничения:</strong> нечитаемо вручную (нет простого <code>curl</code>), браузерам нужна
+          прослойка (gRPC-Web), хуже дружит с прокси и кэшированием.</li>
+        <li><strong>Берём gRPC, когда:</strong> много<strong> внутренних</strong> вызовов, важны задержка и
+          трафик, нужен стриминг.</li>
+      </ul>
+
+      <h3>Брокер сообщений — когда нужна асинхронность</h3>
+      <ul>
+        <li><strong>Идея:</strong> один сервис кладёт сообщение в брокер (RabbitMQ, Kafka), другой забирает и
+          обрабатывает — не одновременно и без ожидания.</li>
+        <li><strong>Плюсы:</strong> развязка по времени, <strong>сглаживание пиков</strong>, надёжность
+          (сообщение не потеряется), масштабирование обработчиков.</li>
+        <li><strong>Что помнить:</strong> ответ приходит «потом» (eventual consistency); доставка
+          <em>at-least-once</em> → возможны <strong>дубликаты</strong>, значит обработчик должен быть
+          <strong>идемпотентным</strong>; появляется инфраструктура.</li>
+        <li><strong>Берём брокер, когда:</strong> работа долгая (отвечаем <code>202 Accepted</code>), нужно
+          пережить пики, это события для других систем.</li>
+      </ul>
+
+      <table>
+        <thead><tr><th></th><th>REST</th><th>gRPC</th><th>Брокер</th></tr></thead>
+        <tbody>
+          <tr><td>Формат</td><td>текст (JSON)</td><td>бинарный (Protobuf)</td><td>любой</td></tr>
+          <tr><td>Стиль</td><td>запрос → ответ</td><td>запрос → ответ (+ стриминг)</td><td>отправил и забыл</td></tr>
+          <tr><td>Клиент</td><td>браузер, внешние системы</td><td>свои сервисы</td><td>сервисы, фон</td></tr>
+          <tr><td>Ответ «сейчас»</td><td>да</td><td>да</td><td><strong>нет</strong></td></tr>
+        </tbody>
+      </table>
+
+      <div class="box gold">
+        <span class="t">★ На практике — комбинация</span>
+        <p><strong>REST — на границе</strong> с внешним миром, <strong>gRPC — внутри</strong> между сервисами,
+          <strong>брокер — для того, что можно сделать позже</strong> (тяжёлые и фоновые задачи).</p>
+      </div>
+    </section>
+    <section id="q5-validation">
+      <h2>Часть 2. Валидация входных данных в ASP.NET Core</h2>
+      <p>Правило номер один: <strong>клиенту доверять нельзя</strong>. Проверки на клиенте нужны только ради
+        удобства (показать ошибку сразу) — сервер проверяет всё сам.</p>
+
+      <h3>Четыре уровня защиты</h3>
+      <ol>
+        <li><strong>Инфраструктурные лимиты:</strong> размер тела запроса, rate limiting, таймауты — отсечь
+          «наглое» до логики.</li>
+        <li><strong>Формат и модель:</strong> типы и обязательные поля.</li>
+        <li><strong>Бизнес-правила:</strong> «дата окончания позже начала», «нельзя отменить оплаченный
+          заказ».</li>
+        <li><strong>Гарантия в БД:</strong> <code>NOT NULL</code>, <code>UNIQUE</code>, <code>CHECK</code>,
+          внешние ключи — последний рубеж.</li>
+      </ol>
+
+      <h3>Как это выглядит в коде (MVC/Controller)</h3>
+      <div class="codewrap">
+        <pre><code class="language-csharp">public sealed class CreateOrderRequest
+{
+    [Required]
+    [Range(1, int.MaxValue)]
+    public int CustomerId { get; init; }
+
+    [Required]
+    [StringLength(200, MinimumLength = 3)]
+    public string Title { get; init; } = "";
+
+    [Range(0.01, 1_000_000)]
+    public decimal Total { get; init; }
+}
+
+[ApiController]                 // ← с этим атрибутом модель проверяется автоматически
+[Route("api/orders")]
+public class OrdersController : ControllerBase
+{
+    [HttpPost]
+    public IActionResult Create(CreateOrderRequest request)
+    {
+        // если модель невалидна — сюда не попадём: вернётся 400 с описанием
+        return Ok(_service.Create(request));
+    }
+}</code></pre>
+      </div>
+      <p>В <strong>Minimal API</strong> авто-проверки нет: валидируем вручную или через endpoint-фильтр
+        (а для сложных правил подключаем <strong>FluentValidation</strong> — отдельный класс-валидатор).</p>
+
+      <h3>Что возвращать при ошибке</h3>
+      <table>
+        <thead><tr><th>Ситуация</th><th>Код</th></tr></thead>
+        <tbody>
+          <tr><td>Неверный формат / пустое обязательное поле / битый JSON</td><td><strong>400 Bad Request</strong></td></tr>
+          <tr><td>Формат ок, но нарушено бизнес-правило</td><td><strong>422</strong> (или 409)</td></tr>
+          <tr><td>Нет прав</td><td>403</td></tr>
+          <tr><td>Наша ошибка</td><td>500 — и <strong>никогда</strong> не на плохой ввод</td></tr>
+        </tbody>
+      </table>
+
+      <div class="box warn">
+        <span class="t">Что чаще всего делают неправильно</span>
+        <ul>
+          <li>Отдают <code>500</code> на некорректный ввод — путают клиента и мониторинг.</li>
+          <li>Принимают <strong>сущность БД</strong> вместо DTO → клиент может перезаписать лишние поля
+            (защита от over-posting).</li>
+          <li>Не ограничивают размер тела запроса — сервис можно «залить».</li>
+          <li>Логируют то, что вернули в ошибке (пароли, персональные данные).</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="q5-answer">
+      <h2>Готовый ответ (сжато)</h2>
+      <div class="qa">
+        <p><span class="q">Про REST / gRPC / брокеры.</span> «Выбираю по трём вопросам: кто клиент, нужен ли
+          ответ сейчас и насколько интенсивный обмен. Публичный API — REST: понятно, отлаживается
+          <code>curl</code>, кэшируется, работает в браузере. Внутренние вызовы — gRPC: бинарный Protobuf и
+          HTTP/2 дают меньше трафика и задержку, плюс стриминг и строгий контракт. Долгие и пиковые операции —
+          брокер: клиенту отвечаем <code>202 Accepted</code>, работу делает воркер; там же нужна
+          идемпотентность, потому что доставка «хотя бы один раз». На практике используют всё три:
+          REST снаружи, gRPC внутри, брокер для событий».</p>
+      </div>
+      <div class="qa">
+        <p><span class="q">Про валидацию.</span> «Валидация у меня на нескольких уровнях. Сначала
+          инфраструктурные лимиты: размер тела, rate limiting, таймауты. Затем формат и модель — атрибуты на
+          DTO плюс <code>[ApiController]</code>, для сложных правил FluentValidation. Бизнес-правила — в
+          сервисном слое. Гарантию дают ограничения в БД: <code>NOT NULL</code>, <code>UNIQUE</code>,
+          <code>CHECK</code>. Плохой ввод возвращаю как <code>400</code>/<code>422</code> с описанием, никогда
+          не <code>500</code>. И принимаю DTO, а не сущности БД — чтобы клиент не мог перезаписать лишние
+          поля».</p>
+      </div>
+
+      <footer>
+        <p><a href="index.html">← Все вопросы</a> · <a href="q4-oracle-to-postgres.html">Вопрос 4: Oracle → PostgreSQL</a></p>
+      </footer>
+    </section>
+  </article>
+  </main>
+</div>
+<script>if (window.hljs) hljs.highlightAll();</script>
+</body>
+</html>
